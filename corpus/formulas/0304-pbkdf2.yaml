@@ -1,0 +1,67 @@
+id: 0x0304
+slug: pbkdf2
+version: 1
+status: active
+
+doc:
+  name: "PBKDF2, Password Based Key Derivation"
+  latex: 'T_i = U_1 \oplus U_2 \oplus \cdots \oplus U_c, \quad U_j = \mathrm{PRF}(P, U_{j-1})'
+  domain: "hash-mac"
+  summary: >
+    Derives an encryption key from a low entropy password. Repeating the same
+    operation c times deliberately raises the cost of a brute force attempt.
+  notes: >
+    Two defences work together. The salt differs per user, which makes
+    precomputed rainbow tables useless. The iteration count c raises the cost
+    of every single attempt. WEAKNESS: PBKDF2 is only CPU intensive, it needs
+    no memory, so it parallelises very efficiently on GPUs and ASICs. New
+    designs should prefer the memory hard Argon2id or scrypt. The iteration
+    count has to rise over time; the 1000 that was normal in the 2000s is
+    entirely inadequate today.
+  tags: [pbkdf2, password, key-derivation, salt, argon2, memory-hard]
+  references:
+    - "RFC 8018 (PKCS #5 v2.1)"
+    - "OWASP Password Storage Cheat Sheet"
+  related: [0x0301]
+
+params:
+  - name: iterations
+    type: uint
+    bits: 32
+    role: public
+    description: "Iteration count c. The higher it is, the costlier the attack."
+  - name: dklen_bits
+    type: uint
+    bits: 16
+    role: public
+    description: "Length of the key to derive."
+  - name: salt
+    type: bytes
+    bits: 128
+    role: public
+    description: "The salt. Not secret, but it must differ per user."
+  - name: dk
+    type: bytes
+    bits: 256
+    role: public
+    description: "The derived key."
+  - name: password
+    type: bytes
+    bits: 512
+    role: secret
+    description: "The user's password. NOT written into the ciphertext."
+
+constraints:
+  - expr: "iterations >= 1"
+    reason: "At least one iteration must be performed."
+    severity: error
+  - expr: "dklen_bits > 0"
+    reason: "The derived key length must be positive."
+    severity: error
+  - expr: "iterations >= 600000"
+    reason: "Below the current OWASP recommendation, which is inadequate protection against brute force."
+    severity: warning
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

@@ -1,0 +1,64 @@
+id: 0x0301
+slug: hmac
+version: 1
+status: active
+
+doc:
+  name: "HMAC, Hash Based Message Authentication Code"
+  latex: '\mathrm{HMAC}(K, m) = H\big((K \oplus opad) \,\|\, H((K \oplus ipad) \,\|\, m)\big)'
+  domain: "hash-mac"
+  summary: >
+    A construction turning a hash function into a keyed message authentication
+    code. Hashing in two layers blocks the length extension attack.
+  notes: >
+    Two layers are essential. A single layer H(K || m) is open to a length
+    extension attack on Merkle-Damgard based hashes, letting an attacker
+    append to the message and produce a valid tag without knowing the key.
+    ipad is 0x36 repeated and opad is 0x5C repeated; all that matters is that
+    they differ. VERIFICATION WARNING: the tag comparison must be CONSTANT
+    TIME. An ordinary byte by byte comparison stops at the first difference,
+    and the timing lets the correct tag be guessed one byte at a time.
+  tags: [hmac, mac, length-extension, constant-time, authentication]
+  references:
+    - "RFC 2104"
+    - "FIPS 198-1"
+  related: [0x0302, 0x0303, 0x0304]
+
+params:
+  - name: hash_fn
+    type: enum
+    values: [sha256, sha384, sha512, sha3-256, sha3-512]
+    role: public
+    description: "Which hash function is used. A 3 bit index travels on the wire."
+  - name: block_bits
+    type: uint
+    bits: 16
+    role: public
+    description: "Block width of the hash function, 512 for SHA-256."
+  - name: m
+    type: bytes
+    bits: 1024
+    role: public
+    description: "The message being authenticated."
+  - name: tag
+    type: bytes
+    bits: 256
+    role: public
+    description: "The authentication tag produced."
+  - name: K
+    type: bytes
+    bits: 512
+    role: secret
+    description: "Secret key. NOT written into the ciphertext."
+
+constraints:
+  - expr: "block_bits > 0"
+    reason: "The block width must be positive."
+    severity: error
+  - expr: "block_bits % 8 == 0"
+    reason: "The block width must be a whole number of bytes."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

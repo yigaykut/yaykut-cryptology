@@ -1,0 +1,82 @@
+id: 0x0405
+slug: module-lwe
+version: 1
+status: active
+
+doc:
+  name: "Module-LWE"
+  latex: '\mathbf{t} = \mathbf{A}\mathbf{s} + \mathbf{e} \in R_q^{k}, \quad R_q = \mathbb{Z}_q[x]/(x^{n}+1)'
+  domain: "lattice-post-quantum"
+  summary: >
+    The balance between LWE and Ring-LWE. It uses polynomials instead of
+    scalars, and a k dimensional vector of polynomials instead of a single
+    one. It is the path NIST chose.
+  notes: >
+    The relation between the three variants comes down to one parameter. Plain
+    LWE has ring degree n=1 and a large dimension; Ring-LWE has dimension k=1
+    and a large ring degree; Module-LWE keeps both moderate. Why the middle:
+    Ring-LWE's algebraic symmetry, a single large ring, has not been broken so
+    far but is not considered conservative. Plain LWE is safe but its keys are
+    very large. Module-LWE lets different security levels be built on the same
+    ring by changing k. Kyber-512, 768 and 1024 are all defined with the same
+    n=256 and q=3329, differing only in k = 2, 3, 4. In an implementation that
+    means one NTT routine covers all three levels, which is a large practical
+    advantage.
+  tags: [module-lwe, kyber, ml-kem, ntt, nist, post-quantum]
+  references:
+    - "Langlois & Stehlé, Worst-case to average-case reductions for module lattices, 2015"
+    - "NIST FIPS 203 (ML-KEM)"
+  related: [0x0401, 0x0402]
+
+params:
+  - name: n
+    type: uint
+    bits: 16
+    role: public
+    description: "Ring degree, 256 across the Kyber family at all three levels."
+  - name: k
+    type: uint
+    bits: 8
+    role: public
+    description: "Module rank, 2, 3 or 4 for Kyber-512, 768 and 1024."
+  - name: q
+    type: uint
+    bits: 32
+    role: public
+    description: "Coefficient modulus, 3329 in Kyber."
+  - name: rho
+    type: bytes
+    bits: 256
+    role: public
+    description: "Public seed A is expanded from."
+  - name: t
+    type: bytes
+    bits: 3072
+    role: public
+    description: "Public key vector, the counterpart of a single polynomial."
+  - name: s
+    type: bytes
+    bits: 3072
+    role: secret
+    description: "The secret vector. NOT written into the ciphertext."
+
+constraints:
+  - expr: "n > 0"
+    reason: "The ring degree must be positive."
+    severity: error
+  - expr: "n % 2 == 0"
+    reason: "n must be even so that x^n + 1 is irreducible."
+    severity: error
+  - expr: "k >= 2"
+    reason: "k = 1 reduces Module-LWE to Ring-LWE."
+    severity: error
+  - expr: "k <= 8"
+    reason: "This entry defines a module of rank at most 8."
+    severity: error
+  - expr: "q > 1"
+    reason: "The modulus must be greater than 1."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

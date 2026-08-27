@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kriptografi.local/formula.schema.json",
+  "title": "Formula Corpus Entry",
+  "description": "The schema for a single formula in the corpus. It is written as YAML and validated against this schema after parsing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "slug", "version", "status", "doc", "params"],
+
+  "properties": {
+    "id": {
+      "description": "The FROZEN numeric identity. This is the value that enters the wire format. Once assigned it NEVER changes, and it is NEVER reused even after retirement. The block convention: 0x0100-01FF elliptic curves, 0x0200-02FF modular arithmetic and RSA, 0x0300-03FF hash and MAC, 0x0400-04FF lattice and post-quantum, 0x0500-05FF classical ciphers, 0x0600-06FF symmetric and stream ciphers, 0x0700-07FF transport (raw data, not a formula), 0x0800-08FF protocols and proofs. 0xFFFF is RESERVED for the wire format's chain mode and no corpus entry may take it.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+
+    "slug": {
+      "description": "A human readable identity. It is used in the filename and in logs and NEVER enters the wire format.",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 64
+    },
+
+    "version": {
+      "description": "The entry version. If params or constraints change, a NEW ID is opened rather than the entry being edited; this field only rises for corrections inside the doc block.",
+      "type": "integer",
+      "minimum": 1
+    },
+
+    "status": {
+      "description": "active: in use. deprecated: not used for new encryption, kept for decoding. retired: a historical record only, the id stays blocked.",
+      "enum": ["active", "deprecated", "retired"]
+    },
+
+    "doc": {
+      "description": "LAYER 3, for the RAG and for humans. The engine never reads this block.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "latex", "domain", "summary"],
+      "properties": {
+        "name":    { "type": "string", "maxLength": 120 },
+        "latex":   { "type": "string", "description": "The formula itself, WITHOUT $ signs." },
+        "domain":  { "type": "string", "description": "The top level category; it has to match the id block." },
+        "summary": { "type": "string", "description": "1 to 3 sentences. The field the RAG search feeds on most." },
+        "notes":   { "type": "string", "description": "A longer explanation, the traps, the history. Optional." },
+        "tags":    { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "references": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Book, paper and RFC citations, so the RAG can cite a source."
+        },
+        "related": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "description": "The numeric ids of related formulas.",
+          "uniqueItems": true
+        }
+      }
+    },
+
+    "params": {
+      "description": "LAYER 1, the engine. LIST ORDER IS WIRE ORDER and it is significant. A parameter referred to by another has to come BEFORE it (the backward reference rule). All widths are FIXED, because variable length leaks the magnitude of the parameter.",
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "type"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$",
+            "description": "It has to match the symbol in the latex field."
+          },
+          "type": {
+            "enum": ["prime", "field_element", "scalar", "uint", "point", "enum", "bytes"],
+            "description": "prime: a prime modulus. field_element: an element of F_p, requires 'mod'. scalar: an integer modulo the group order, requires 'mod'. uint: a fixed width unsigned integer. point: a curve point, requires 'curve', in compressed SEC1 encoding. enum: one of 'values'. bytes: a fixed length octet string."
+          },
+          "bits": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8192,
+            "description": "The FIXED width on the wire. Required for prime, field_element, scalar, uint and bytes. For point it is derived as bits+8, and for enum from the length of values."
+          },
+          "mod": {
+            "type": "string",
+            "description": "For field_element and scalar: the name of the earlier parameter carrying the modulus."
+          },
+          "curve": {
+            "type": "string",
+            "description": "For point: a name pointing at the group of earlier parameters defining the curve."
+          },
+          "values": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 2,
+            "uniqueItems": true,
+            "description": "The allowed values for enum. The index is what travels on the wire."
+          },
+          "role": {
+            "enum": ["public", "secret", "derived"],
+            "description": "public: written into the ciphertext. secret: not written, derived from the key. derived: not written, computed from the other parameters. Only 'public' ones enter the payload."
+          },
+          "description": { "type": "string" }
+        }
+      }
+    },
+
+    "constraints": {
+      "description": "LAYER 1, the validity rules. They run through a restricted AST evaluator and raw eval() is NEVER used. They are checked before encryption and after decoding.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["expr", "reason"],
+        "properties": {
+          "expr":   { "type": "string", "description": "A Python expression. Only names from params and arithmetic or comparison operators may be used." },
+          "reason": { "type": "string", "description": "The explanation shown to the user when it is violated." },
+          "severity": { "enum": ["error", "warning"], "default": "error" }
+        }
+      }
+    },
+
+    "sampler": {
+      "description": "LAYER 2, the distinguisher. How valid parameter sets are sampled to build a training corpus.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy"],
+      "properties": {
+        "strategy": {
+          "enum": ["uniform_valid", "from_catalog", "mixed"],
+          "description": "uniform_valid: rejection sampling until the constraints hold. from_catalog: only the known values in 'catalog'. mixed: a combination of the two."
+        },
+        "catalog": {
+          "type": "array",
+          "items": { "type": "object" },
+          "description": "Named ready made parameter sets for from_catalog and mixed (secp256k1, P-256 and so on)."
+        },
+        "max_rejections": {
+          "type": "integer",
+          "default": 1000,
+          "description": "The give up threshold for uniform_valid. Exceeding it means the entry's constraints are too narrow."
+        }
+      }
+    }
+  }
+}

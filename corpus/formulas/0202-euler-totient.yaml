@@ -1,0 +1,56 @@
+id: 0x0202
+slug: euler-totient
+version: 1
+status: active
+
+doc:
+  name: "Euler Totient Function (Product of Two Primes)"
+  latex: '\varphi(n) = (p-1)(q-1), \quad n = pq'
+  domain: "modular-arithmetic"
+  summary: >
+    For a number of the form n = pq, the count of positive integers below n
+    that are coprime to it. It is the quantity at the centre of RSA key
+    generation.
+  notes: >
+    RSA's security rests directly on this. n is public, but computing phi(n)
+    means knowing p and q, which means factoring n. If phi(n) is known, the
+    private exponent d follows immediately and the cipher collapses. That is
+    why p and q must be destroyed once they have been used. In practice the
+    Carmichael function lambda(n) = lcm(p-1, q-1) is used instead of phi(n);
+    it gives a smaller d and speeds up decryption.
+  tags: [rsa, totient, euler, key-generation, factoring]
+  references:
+    - "RFC 8017 (PKCS #1 v2.2), §3.2"
+  related: [0x0201, 0x0203]
+
+params:
+  - name: n
+    type: uint
+    bits: 2048
+    role: public
+    description: "The modulus, a product of two primes. Public."
+  - name: p
+    type: uint
+    bits: 1024
+    role: secret
+    description: "First prime factor. Destroyed after key generation."
+  - name: q
+    type: uint
+    bits: 1024
+    role: secret
+    description: "Second prime factor. Destroyed after key generation."
+
+constraints:
+  - expr: "p != q"
+    reason: "If p = q then n is a perfect square and factors instantly by taking a square root."
+    severity: error
+  - expr: "p > 2"
+    reason: "The prime factors must be odd."
+    severity: error
+  - expr: "q > 2"
+    reason: "The prime factors must be odd."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

@@ -1,0 +1,75 @@
+id: 0x0204
+slug: rsa-crt-cozumleme
+version: 1
+status: active
+
+doc:
+  name: "RSA Decryption with the Chinese Remainder Theorem"
+  latex: 'm_p = c^{d_p} \bmod p, \quad m_q = c^{d_q} \bmod q, \quad m = m_q + q\big(q^{-1}(m_p - m_q) \bmod p\big)'
+  domain: "modular-arithmetic"
+  summary: >
+    The accelerated form of RSA decryption. Instead of one large modulus, two
+    exponentiations run under smaller moduli and the results are combined with
+    the Chinese Remainder Theorem. About four times faster.
+  notes: >
+    DANGER: a single bit error during the computation, from a hardware fault
+    or deliberate fault injection, lets an attacker take the gcd of the
+    difference between the faulty and correct signatures and recover p
+    IMMEDIATELY, collapsing the whole key. This is the Bellcore attack. Every
+    result produced through CRT therefore has to be re-encrypted with the
+    public exponent and verified before it is returned.
+  tags: [rsa, crt, speedup, bellcore, fault-injection]
+  references:
+    - "RFC 8017 (PKCS #1 v2.2), §5.1.2"
+    - "Boneh, DeMillo, Lipton, On the Importance of Checking Cryptographic Protocols for Faults, 1997"
+  related: [0x0201, 0x0203]
+
+params:
+  - name: c
+    type: uint
+    bits: 2048
+    role: public
+    description: "The ciphertext to decrypt."
+  - name: p
+    type: uint
+    bits: 1024
+    role: secret
+    description: "First prime factor."
+  - name: q
+    type: uint
+    bits: 1024
+    role: secret
+    description: "Second prime factor."
+  - name: dp
+    type: uint
+    bits: 1024
+    role: secret
+    description: "d mod (p-1)."
+  - name: dq
+    type: uint
+    bits: 1024
+    role: secret
+    description: "d mod (q-1)."
+  - name: qinv
+    type: uint
+    bits: 1024
+    role: secret
+    description: "The inverse of q modulo p."
+
+constraints:
+  - expr: "p != q"
+    reason: "The prime factors must be distinct."
+    severity: error
+  - expr: "dp < p"
+    reason: "dp must be reduced modulo p-1."
+    severity: error
+  - expr: "dq < q"
+    reason: "dq must be reduced modulo q-1."
+    severity: error
+  - expr: "qinv < p"
+    reason: "q^-1 must be reduced modulo p."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

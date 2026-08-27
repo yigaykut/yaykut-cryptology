@@ -1,0 +1,67 @@
+id: 0x0302
+slug: merkle-damgard
+version: 1
+status: active
+
+doc:
+  name: "Merkle-Damgard Construction"
+  latex: 'H_i = f(H_{i-1}, M_i), \quad H_0 = IV, \quad H(M) = H_t'
+  domain: "hash-mac"
+  summary: >
+    A way of building a variable input hash function out of a fixed input
+    compression function. MD5, SHA-1 and the SHA-2 family all use it.
+  notes: >
+    Merkle-Damgard strengthening, appending the length to the end of the
+    message, guarantees that the whole hash is collision resistant if the
+    compression function is. STRUCTURAL WEAKNESS: because the final state is
+    the output directly, an attacker who knows H(M) can compute H(M || padding
+    || M'), which is the length extension attack. That is why H(K || m) cannot
+    be used as a MAC and HMAC (0x0301) is needed. SHA-3 moved to the sponge
+    construction (0x0303) to remove the problem entirely.
+  tags: [merkle-damgard, hash, sha2, length-extension, compression-function]
+  references:
+    - "Merkle, A Certified Digital Signature, CRYPTO 1989"
+    - "Damgård, A Design Principle for Hash Functions, CRYPTO 1989"
+  related: [0x0301, 0x0303, 0x0305]
+
+params:
+  - name: state_bits
+    type: uint
+    bits: 16
+    role: public
+    description: "Internal state width, 256 for SHA-256."
+  - name: block_bits
+    type: uint
+    bits: 16
+    role: public
+    description: "Message block width, 512 for SHA-256."
+  - name: IV
+    type: bytes
+    bits: 256
+    role: public
+    description: "Initial value H_0, fixed by the standard."
+  - name: Mi
+    type: bytes
+    bits: 512
+    role: public
+    description: "The message block being processed."
+  - name: Hi
+    type: bytes
+    bits: 256
+    role: public
+    description: "The chaining value after the block has been processed."
+
+constraints:
+  - expr: "state_bits > 0"
+    reason: "The state width must be positive."
+    severity: error
+  - expr: "block_bits >= state_bits"
+    reason: "The compression function has to narrow its input, so the block cannot be smaller than the state."
+    severity: error
+  - expr: "state_bits % 8 == 0"
+    reason: "The state width must be a whole number of bytes."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

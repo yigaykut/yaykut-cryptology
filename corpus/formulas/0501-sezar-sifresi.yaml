@@ -1,0 +1,58 @@
+id: 0x0501
+slug: sezar-sifresi
+version: 2
+status: retired
+
+doc:
+  name: "Caesar Cipher (RETIRED)"
+  latex: 'c \equiv (m + k) \pmod{26}'
+  domain: "classical-ciphers"
+  summary: >
+    RETIRED (2026-08-12). A substitution cipher shifting every letter of the
+    alphabet by a fixed amount k. It is one of the oldest known ciphers and is
+    not secure by modern standards.
+  notes: >
+    RETIREMENT NOTE: this entry was withdrawn by the project owner's decision.
+    The engine no longer encrypts with it. The file was not deleted because
+    the id 0x0501 has to stay blocked permanently. If it were freed and given
+    to another formula one day, old ciphertexts would decode silently wrong
+    (ADR-003). See ADR-009 for details.
+
+    The technical content is kept as a historical record: the key space is
+    only 25 possibilities and falls to brute force in seconds. Letter
+    frequencies are also fully preserved, so a single ciphertext yields to
+    frequency analysis. It is the textbook example of Kerckhoffs's principle:
+    security that depends on keeping the method secret collapses entirely the
+    moment the method is learned. It is the a = 1 special case of the affine
+    cipher (0x0502).
+  tags: [classical, substitution, shift, frequency-analysis, retired]
+  references:
+    - "Suetonius, De Vita Caesarum, Divus Iulius 56"
+  related: [0x0502, 0x0503]
+
+params:
+  - name: m
+    type: uint
+    bits: 5
+    role: public
+    description: "Index of the plaintext letter in the alphabet (A=0, B=1, ... Z=25)."
+  - name: k
+    type: uint
+    bits: 5
+    role: secret
+    description: "The shift. It is the key itself and is NOT written into the ciphertext."
+
+constraints:
+  - expr: "m < 26"
+    reason: "The letter index cannot exceed the alphabet size (A=0 ... Z=25)."
+    severity: error
+  - expr: "k < 26"
+    reason: "The shift cannot exceed the alphabet size."
+    severity: error
+  - expr: "k % 26 != 0"
+    reason: "k=0 shifts nothing, so the encryption is a no-op."
+    severity: warning
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

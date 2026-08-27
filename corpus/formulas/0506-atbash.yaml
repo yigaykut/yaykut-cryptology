@@ -1,0 +1,51 @@
+id: 0x0506
+slug: atbash
+version: 1
+status: active
+
+doc:
+  name: "Atbash Cipher"
+  latex: 'c \equiv (n - 1) - m \pmod{n}'
+  domain: "classical-ciphers"
+  summary: >
+    A substitution cipher that reverses the alphabet: the first letter maps to
+    the last, the second to the second last. It has no key.
+  notes: >
+    One of the oldest known ciphers. Its name comes from the first, last,
+    second and second last letters of the Hebrew alphabet
+    (aleph-tav-bet-shin). Having no key, it provides no security at all under
+    Kerckhoffs's principle: the moment the method is known, the cipher is
+    broken. It is in the corpus for its historical and teaching value. It is
+    its own inverse: applying the same transformation twice gives back the
+    plaintext. It shares that property with XOR, but unlike XOR it is keyless.
+  tags: [classical, atbash, substitution, keyless, self-inverse]
+  references:
+    - "Kahn, The Codebreakers, chapter 2"
+  related: [0x0502, 0x0507]
+
+params:
+  - name: m
+    type: uint
+    bits: 5
+    role: public
+    description: "Index of the plaintext letter in the alphabet."
+  - name: alfabe
+    type: uint
+    bits: 8
+    role: public
+    description: "Alphabet size n, 26 for the Latin alphabet."
+
+constraints:
+  - expr: "alfabe > 1"
+    reason: "The alphabet must contain at least two letters."
+    severity: error
+  - expr: "m < alfabe"
+    reason: "The letter index cannot exceed the alphabet size."
+    severity: error
+  - expr: "alfabe <= 32"
+    reason: "This entry carries a 5 bit letter index, so the alphabet cannot exceed 32."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

@@ -1,0 +1,62 @@
+id: 0x0107
+slug: ecdh-ortak-sir
+version: 1
+status: active
+
+doc:
+  name: "ECDH Shared Secret Derivation"
+  latex: 'S = d_A Q_B = d_B Q_A = d_A d_B G'
+  domain: "elliptic-curves"
+  summary: >
+    A key exchange that lets two parties agree on a shared secret over an open
+    channel. Each multiplies their own private scalar by the other's public
+    point and both reach the same result.
+  notes: >
+    Security rests on the hardness of the elliptic curve discrete logarithm
+    problem: given Q = dG, recovering d is infeasible in practice. The shared
+    secret S is NOT used directly as a key. It has to go through a key
+    derivation function, because S is not uniformly distributed. The point
+    sent by the other side must also be checked to be on the curve, otherwise
+    an invalid curve attack is open.
+  tags: [ecdh, key-exchange, discrete-log, kdf]
+  references:
+    - "SEC 1: Elliptic Curve Cryptography, v2.0, §3.3.1"
+    - "NIST SP 800-56A Rev. 3"
+  related: [0x0101, 0x0106, 0x0206]
+
+params:
+  - name: p
+    type: prime
+    bits: 256
+    role: public
+    description: "Characteristic of the field the curve is defined over."
+  - name: Q
+    type: point
+    curve: p
+    bits: 256
+    role: public
+    description: "The other party's public point, in compressed SEC1 encoding."
+  - name: d
+    type: scalar
+    mod: p
+    bits: 256
+    role: secret
+    description: "Local private scalar. NOT written into the ciphertext."
+  - name: S
+    type: point
+    curve: p
+    bits: 256
+    role: derived
+    description: "The shared secret point. Computed, not transmitted."
+
+constraints:
+  - expr: "d % p != 0"
+    reason: "The private scalar cannot be zero."
+    severity: error
+  - expr: "p > 3"
+    reason: "The short Weierstrass form requires char(F_p) > 3."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

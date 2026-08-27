@@ -1,0 +1,52 @@
+id: 0x0602
+slug: aes-sbox
+version: 1
+status: active
+
+doc:
+  name: "AES S-Box"
+  latex: 'S(x) = A \cdot x^{-1} \oplus c \quad \text{in } \mathrm{GF}(2^8),\ \ x^{-1}|_{x=0} := 0'
+  domain: "symmetric-stream"
+  summary: >
+    The only nonlinear component of AES. A byte is first inverted in the field
+    GF(2^8) and then put through a bitwise affine transformation.
+  notes: >
+    Each of the two steps answers a different class of attack. Multiplicative
+    inversion gives the best known nonlinearity figures against differential
+    and linear cryptanalysis. The affine transformation removes the S-box's
+    fixed points and complicates its algebraic expression, since inversion on
+    its own would leave a very clean algebraic structure. The field is defined
+    by the irreducible polynomial x^8 + x^4 + x^3 + x + 1 (0x11B). Since zero
+    has no inverse, S(0) is specially assigned as 0x63. SIDE CHANNEL:
+    implemented as a table lookup, the S-box leaks the key through cache
+    timing. Constant time implementations use bitslicing or a hardware
+    instruction (AES-NI).
+  tags: [aes, s-box, galois-field, nonlinear, cache-attack, aes-ni]
+  references:
+    - "FIPS 197 (AES), §5.1.1"
+    - "Daemen & Rijmen, The Design of Rijndael"
+  related: [0x0603, 0x0601]
+
+params:
+  - name: x
+    type: uint
+    bits: 8
+    role: public
+    description: "The byte going into the S-box."
+  - name: sx
+    type: uint
+    bits: 8
+    role: public
+    description: "The byte coming out of the S-box."
+
+constraints:
+  - expr: "x < 256"
+    reason: "The input must be a single byte."
+    severity: error
+  - expr: "sx < 256"
+    reason: "The output must be a single byte."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

@@ -1,0 +1,54 @@
+# Package definition and tool settings.
+#
+# It exists so the project can be installed with `pip install -e .`. That is
+# not required; it also runs straight from the repo root. The real gain is the
+# `[tool.pytest]` section: test paths and markers in one place.
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crypto-formula-codebook"
+version = "0.1.0"
+description = "A formula codebook cipher: the engine, a neural auditor and a corpus assistant"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+keywords = ["cryptography", "codebook", "research"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Security :: Cryptography",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "PyYAML>=6.0",
+    "jsonschema>=4.20",
+    "numpy>=1.26",
+]
+
+# Layer 2, the auditor, needs torch. The engine and the corpus work without
+# it, so it is NOT a required dependency: nobody should have to download a
+# 2 GB ML library to use the cipher engine.
+[project.optional-dependencies]
+layer2 = ["torch>=2.2"]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools]
+packages = ["crypto", "layer2", "layer3", "ccore"]
+
+[tool.setuptools.package-data]
+crypto = ["*.h", "*.c"]
+ccore = ["*.h", "*.c"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# `-ra` summarises the reasons for skips and failures AT THE END.
+# Covert mode tests skip without the password and that has to be visible: a run
+# that looks quietly green hides the fact that coverage has narrowed.
+addopts = "-ra"
+filterwarnings = ["error::pytest.PytestUnhandledThreadExceptionWarning"]

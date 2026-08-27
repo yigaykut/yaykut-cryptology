@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>КРИПТО · formula codebook</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<canvas id="backdrop"></canvas>
+<div class="scan"></div>
+
+<main class="stage">
+
+  <header class="head">
+    <div class="brand">
+      <span class="glyph">⬡</span>
+      <h1>КРИПТО</h1>
+      <span class="sub-brand">формула · formula codebook v1</span>
+    </div>
+
+    <div class="equation" aria-label="wire format">
+      <span title="the whole ciphertext">
+        <span class="d">𝒞</span><span class="o">=</span><span class="v">ν</span><span class="o">‖</span><span class="v">σ</span><span class="o">‖</span><span class="v">π</span><span class="o">‖</span><span class="v">τ</span>
+      </span>
+      <span class="divider">/</span>
+      <span title="formula id, hidden with the keystream">
+        <span class="v">σ</span><span class="o">=</span><span class="d">ι</span><span class="o">⊕</span><span class="fn">Ψ</span><sub>κ</sub><span class="o">(</span>ν<span class="o">)</span>
+      </span>
+      <span class="divider">/</span>
+      <span title="length + message + zero padding, encrypted with the keystream">
+        <span class="v">π</span><span class="o">=</span><span class="o">(</span>ℓ‖m‖0<sup>*</sup><span class="o">)</span><span class="o">⊕</span><span class="fn">Ω</span><sub>κ</sub><span class="o">(</span>ν<span class="o">)</span>
+      </span>
+    </div>
+  </header>
+
+  <section class="key-strip">
+    <label for="key">KEY <span class="symbol">κ</span></label>
+    <input id="key" type="text" spellcheck="false" autocomplete="off"
+           placeholder="64 hex characters">
+    <button id="key-generate" class="button secondary">GENERATE</button>
+    <span id="key-status" class="badge">—</span>
+  </section>
+
+  <div class="panels">
+
+    <!-- ENCRYPT -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>ENCRYPT <em class="cyrillic">ШИФРОВАТЬ</em></h2>
+        <span class="op" title="plaintext to ciphertext">m ↦ 𝒞</span>
+      </div>
+
+      <label class="label" for="plain">PLAINTEXT <span class="symbol">m</span></label>
+      <textarea id="plain" rows="6" spellcheck="false"
+                placeholder="text to encrypt"></textarea>
+
+      <div class="measure">
+        <span id="measure-chars">0 characters</span>
+        <span id="measure-bytes">0 / 1024 bytes</span>
+      </div>
+      <div class="fill"><i id="fill-bar"></i></div>
+
+      <button id="encrypt" class="button">ENCRYPT</button>
+
+      <label class="label" for="cipher">CIPHERTEXT <span class="symbol">𝒞</span></label>
+      <textarea id="cipher" rows="5" spellcheck="false" readonly
+                placeholder="hex output"></textarea>
+
+      <div class="actions">
+        <button id="copy-cipher" class="button secondary">COPY</button>
+        <button id="transfer" class="button secondary">SEND TO DECRYPT ↓</button>
+      </div>
+    </section>
+
+    <!-- DECRYPT -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>DECRYPT <em class="cyrillic">РАСШИФРОВАТЬ</em></h2>
+        <span class="op" title="ciphertext to plaintext">𝒞 ↦ m</span>
+      </div>
+
+      <label class="label" for="input-cipher">CIPHERTEXT <span class="symbol">𝒞</span></label>
+      <textarea id="input-cipher" rows="6" spellcheck="false"
+                placeholder="hex ciphertext"></textarea>
+
+      <div class="measure">
+        <span id="decrypt-measure">0 bytes</span>
+        <span id="decrypt-expected">expected 1339</span>
+      </div>
+      <div class="fill"><i id="decrypt-bar"></i></div>
+
+      <button id="decrypt" class="button">DECRYPT</button>
+
+      <label class="label" for="decrypted">DECRYPTED <span class="symbol">m</span></label>
+      <textarea id="decrypted" rows="5" spellcheck="false" readonly
+                placeholder="output"></textarea>
+
+      <div class="actions">
+        <button id="copy-decrypted" class="button secondary">COPY</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="warning" class="warning hidden"></div>
+
+  <!-- WIRE STRIP -->
+  <section class="wire">
+    <div class="wire-title">
+      <span>WIRE FORMATI</span>
+      <span class="wire-total" id="wire-total">1339 B</span>
+    </div>
+
+    <div class="wire-bar" id="wire-bar">
+      <div class="block nonce"    data-name="ν"><b>ν</b><i>nonce</i><u id="w-nonce">16 B</u></div>
+      <div class="block selector" data-name="σ"><b>σ</b><i>selector</i><u id="w-selector">2 B</u></div>
+      <div class="block payload"  data-name="π"><b>π</b><i>payload + padding</i><u id="w-payload">1289 B</u></div>
+      <div class="block tag"      data-name="τ"><b>τ</b><i>tag</i><u id="w-tag">32 B</u></div>
+    </div>
+
+    <div class="wire-values">
+      <div class="value"><span>ν</span><code id="v-nonce">—</code></div>
+      <div class="value"><span>σ</span><code id="v-selector">—</code></div>
+      <div class="value"><span>τ</span><code id="v-tag">—</code></div>
+    </div>
+  </section>
+
+  <!-- SYMBOL GLOSSARY -->
+  <section class="glossary">
+    <div class="glossary-head">
+      <span>SYMBOL GLOSSARY <em class="cyrillic">СЛОВАРЬ</em></span>
+      <button id="glossary-open" class="button secondary">HIDE</button>
+    </div>
+
+    <div class="glossary-body" id="glossary-body">
+
+      <div class="glossary-group">
+        <h4>PARTS OF THE CIPHERTEXT</h4>
+        <dl>
+          <dt>𝒞</dt><dd><b>ciphertext.</b> The four parts below laid end to end. Always 1339 bytes.</dd>
+          <dt>ν</dt><dd><b>nonce.</b> 16 random bytes regenerated on every encryption. This is why encrypting the same text twice gives different output. It travels in the clear and is not secret.</dd>
+          <dt>σ</dt><dd><b>selector.</b> 2 bytes saying which corpus entry was used. Masked with the key, so it looks random from outside.</dd>
+          <dt>π</dt><dd><b>payload.</b> Frame header, message and padding. Encrypted, 1289 bytes.</dd>
+          <dt>τ</dt><dd><b>tag.</b> Integrity seal, 32 bytes. Flip one bit and verification fails.</dd>
+        </dl>
+      </div>
+
+      <div class="glossary-group">
+        <h4>INPUTS</h4>
+        <dl>
+          <dt>κ</dt><dd><b>key.</b> What you type in the field above. All security rests on it.</dd>
+          <dt>m</dt><dd><b>message.</b> The plaintext you want to encrypt.</dd>
+          <dt>ℓ</dt><dd><b>length.</b> The real byte count of the message, carried so the decoder knows where padding starts.</dd>
+          <dt>ι</dt><dd><b>identity.</b> The corpus entry number. 0x0701 for raw text.</dd>
+          <dt>0<sup>*</sup></dt><dd><b>padding.</b> Zeros appended to the message so every output is the same size.</dd>
+        </dl>
+      </div>
+
+      <div class="glossary-group">
+        <h4>OPERATIONS</h4>
+        <dl>
+          <dt>‖</dt><dd><b>concatenation.</b> Join two parts. <code>ab ‖ cd = abcd</code></dd>
+          <dt>⊕</dt><dd><b>XOR.</b> Bitwise addition. Apply it twice with the same value and you are back where you started, so encryption and decryption are the same operation.</dd>
+          <dt>Ψ<sub>κ</sub>, Ω<sub>κ</sub></dt><dd><b>keystream.</b> Byte sequences derived from the key and the nonce, indistinguishable from random. They act as masks.</dd>
+          <dt>H</dt><dd><b>entropy.</b> A measure of unpredictability, in bits.</dd>
+          <dt>Σ</dt><dd><b>sum.</b> Add up the bit widths of all parameters.</dd>
+        </dl>
+      </div>
+
+      <div class="glossary-group">
+        <h4>WHAT THE THREE EQUATIONS SAY</h4>
+        <div class="plain-equation">
+          <code>𝒞 = ν ‖ σ ‖ π ‖ τ</code>
+          <p>The ciphertext is four parts laid end to end.</p>
+        </div>
+        <div class="plain-equation">
+          <code>σ = ι ⊕ Ψ<sub>κ</sub>(ν)</code>
+          <p>The formula identity is not written in the clear. It is XORed with a mask derived from the key, so it looks different every time.</p>
+        </div>
+        <div class="plain-equation">
+          <code>π = (ℓ ‖ m ‖ 0<sup>*</sup>) ⊕ Ω<sub>κ</sub>(ν)</code>
+          <p>Length, message and padding are joined and XORed with the keystream. The length is encrypted too, so the message size is not visible from outside.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- LIVE MEASUREMENTS -->
+  <section class="math">
+    <div class="math-card">
+      <h3>CARRIER ENTRY</h3>
+      <div class="math-row"><span id="m-entry-id">0x0701</span> <em id="m-entry-name">Raw Text Transport</em></div>
+      <div class="math-formula">c = Enc<sub>K</sub>(ℓ ‖ m ‖ padding)</div>
+      <p class="math-note">Text travels as a corpus entry. The engine did not change; only a new entry was added.</p>
+    </div>
+
+    <div class="math-card">
+      <h3>PAYLOAD SIZE</h3>
+      <div class="math-formula">|π| = Σ<sub>i</sub> bit(p<sub>i</sub>)</div>
+      <div class="math-row"><code id="m-payload-bits">8208</code> bits data
+        <span class="thin">+</span> <code id="m-padding-bits">2032</code> bits padding</div>
+      <p class="math-note">The payload size is the sum of the entry's parameter bit widths. The rest is padding.</p>
+    </div>
+
+    <div class="math-card">
+      <h3>ENTROPY</h3>
+      <div class="math-formula">H(ν) = 128 bit</div>
+      <div class="math-row">σ ≡ ι ⊕ Ψ<sub>κ</sub>(ν) &nbsp; (mod 2<sup>16</sup>)</div>
+      <p class="math-note">The nonce is 16 bytes, so 128 bits of unpredictability. The selector lives in a 16 bit space.</p>
+    </div>
+
+    <div class="math-card">
+      <h3>CORPUS</h3>
+      <div class="math-row"><code id="m-corpus">34</code> active entries
+        <span class="thin">·</span> ι ∈ [1, 2<sup>16</sup>)</div>
+      <div class="math-formula">ι ↦ σ &nbsp; one to one</div>
+      <p class="math-note">The id space holds 65535 entries. The ones currently in use are below.</p>
+    </div>
+  </section>
+
+  <!-- CORPUS FORMULAS -->
+  <section class="corpus-strip">
+    <div class="cs-head">
+      <span>FROM THE CORPUS <em class="cyrillic">ИЗ КОРПУСА</em></span>
+      <span class="cs-note">not part of the wire format, these are the catalog formulas</span>
+    </div>
+    <div class="cs-list" id="cs-list"></div>
+  </section>
+
+  <footer class="footer">
+    <span>шифр · формула · ключ</span>
+  </footer>
+
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>

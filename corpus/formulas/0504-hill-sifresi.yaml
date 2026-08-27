@@ -1,0 +1,60 @@
+id: 0x0504
+slug: hill-sifresi
+version: 1
+status: active
+
+doc:
+  name: "Hill Cipher"
+  latex: '\mathbf{c} \equiv K\mathbf{m} \pmod{26}, \quad \mathbf{m} \equiv K^{-1}\mathbf{c} \pmod{26}'
+  domain: "classical-ciphers"
+  summary: >
+    The first cipher based on linear algebra, processing letters in blocks
+    rather than one at a time. The key is a matrix and message vectors are
+    multiplied by it.
+  notes: >
+    Its historical importance is introducing the idea of diffusion: changing
+    one plaintext letter changes the whole ciphertext block. That idea became
+    one of the core design principles of modern block ciphers. The key matrix
+    K has to be invertible modulo 26, which means gcd(det(K), 26) = 1. The
+    constraint language cannot express that, so the engine computes the
+    determinant and checks it. FATAL WEAKNESS: it is entirely linear. n known
+    plaintext and ciphertext block pairs give up K directly by solving a
+    linear system. It has no resistance at all to a known plaintext attack.
+  tags: [classical, matrix, linear-algebra, diffusion, known-plaintext]
+  references:
+    - "Hill, Cryptography in an Algebraic Alphabet, American Mathematical Monthly, 1929"
+  related: [0x0502, 0x0603]
+
+params:
+  - name: block_size
+    type: uint
+    bits: 8
+    role: public
+    description: "Matrix size n, the number of letters processed per block."
+  - name: m
+    type: bytes
+    bits: 40
+    role: public
+    description: "Plaintext block, at most 8 letters of 5 bits."
+  - name: c
+    type: bytes
+    bits: 40
+    role: public
+    description: "Ciphertext block."
+  - name: K
+    type: bytes
+    bits: 320
+    role: secret
+    description: "The key matrix, at most 8x8. NOT written into the ciphertext."
+
+constraints:
+  - expr: "block_size >= 2"
+    reason: "A 1x1 matrix reduces to the affine cipher, making the block structure meaningless."
+    severity: error
+  - expr: "block_size <= 8"
+    reason: "This entry carries a matrix of at most 8x8."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

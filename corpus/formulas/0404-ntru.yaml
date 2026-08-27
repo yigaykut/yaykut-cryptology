@@ -1,0 +1,76 @@
+id: 0x0404
+slug: ntru
+version: 1
+status: active
+
+doc:
+  name: "NTRU Public Key Generation"
+  latex: 'h \equiv p \cdot f_q \cdot g \pmod{q}, \quad f_q \cdot f \equiv 1 \pmod{q}'
+  domain: "lattice-post-quantum"
+  summary: >
+    The oldest lattice based public key encryption scheme, defined over a
+    truncated polynomial ring. The public key h derives from the secret
+    polynomials f and g.
+  notes: >
+    Proposed in 1996, it is the oldest lattice scheme still standing unbroken,
+    and that long history is worth something. Two different moduli are used
+    together, a small p (usually 3) and a large q (a power of two). Decryption
+    works by reducing first modulo q and then modulo p, which requires the two
+    to be coprime. The polynomial f has to be invertible modulo q, and not
+    every candidate f satisfies that, so key generation uses rejection
+    sampling. Decryption failure is possible with non-zero probability, and
+    parameter selection has to push that rate down to negligible.
+  tags: [ntru, lattice, post-quantum, truncated-polynomial, invertibility]
+  references:
+    - "Hoffstein, Pipher, Silverman, NTRU: A Ring-Based Public Key Cryptosystem, ANTS 1998"
+  related: [0x0402]
+
+params:
+  - name: N
+    type: uint
+    bits: 16
+    role: public
+    description: "Degree of the ring. Work happens modulo x^N - 1, and N is chosen prime."
+  - name: p
+    type: uint
+    bits: 16
+    role: public
+    description: "Small modulus, usually 3."
+  - name: q
+    type: uint
+    bits: 16
+    role: public
+    description: "Large modulus, usually a power of two."
+  - name: h
+    type: bytes
+    bits: 3072
+    role: public
+    description: "The public key polynomial."
+  - name: f
+    type: bytes
+    bits: 3072
+    role: secret
+    description: "Secret polynomial. Must be invertible modulo q."
+  - name: g
+    type: bytes
+    bits: 3072
+    role: secret
+    description: "Second secret polynomial."
+
+constraints:
+  - expr: "gcd(p, q) == 1"
+    reason: "The two moduli must be coprime, otherwise decryption does not work."
+    severity: error
+  - expr: "p < q"
+    reason: "The small modulus must be smaller than the large one."
+    severity: error
+  - expr: "N > 2"
+    reason: "The ring degree must be a meaningful value."
+    severity: error
+  - expr: "p > 1"
+    reason: "The small modulus must be greater than 1."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

@@ -1,0 +1,91 @@
+id: 0x0803
+slug: pedersen-taahhut
+version: 1
+status: active
+
+doc:
+  name: "Pedersen Commitment"
+  latex: 'C = g^{m} h^{r} \pmod{p}, \quad h = g^{x},\ x \text{ bilinmiyor}'
+  domain: "protocols"
+  summary: >
+    Lets you commit to a value without revealing it. The commitment is
+    published, the value is opened later, and it is provable that nothing was
+    changed.
+  notes: >
+    It carries two properties at once, and they pull in opposite directions.
+
+    HIDING IS PERFECT: because r is uniformly random, C gives no information
+    about m. Even someone with unlimited computing power cannot learn m, since
+    for every value of m there is a matching r. It is the multiplicative
+    version of the one time pad argument (0x0505).
+
+    BINDING IS COMPUTATIONAL: to open a different m' after publishing the
+    commitment, you would need the discrete logarithm x = log_g(h). That is
+    why nobody should know how h was generated; it is usually derived through
+    a hash function in a nothing-up-my-sleeve way.
+
+    Both CANNOT be perfect at once; that is an information theoretic result.
+    Pedersen chooses perfect hiding and leaves binding computational.
+
+    ADDITIVITY: C(m1,r1) * C(m2,r2) = C(m1+m2, r1+r2). Commitments can be
+    added without opening them. Secret ballots, confidential transfers and
+    verifiable computation all rest on that property.
+  tags: [pedersen, commitment, perfect-hiding, homomorphic, discrete-log]
+  references:
+    - "Pedersen, Non-Interactive and Information-Theoretic Secure Verifiable Secret Sharing, CRYPTO 1991"
+  related: [0x0801, 0x0802, 0x0206]
+
+params:
+  - name: p
+    type: prime
+    bits: 128
+    role: public
+    description: "Prime modulus."
+  - name: g
+    type: field_element
+    mod: p
+    bits: 128
+    role: public
+    description: "First generator."
+  - name: h
+    type: field_element
+    mod: p
+    bits: 128
+    role: public
+    description: "Second generator. Its logarithm base g must be unknown."
+  - name: taahhut
+    type: field_element
+    mod: p
+    bits: 128
+    role: public
+    description: "The published commitment C."
+  - name: deger
+    type: scalar
+    mod: p
+    bits: 128
+    role: secret
+    description: "The committed value m. Secret until it is opened."
+  - name: korleyici
+    type: scalar
+    mod: p
+    bits: 128
+    role: secret
+    description: "Blinding value r. Freshly random on every commitment."
+
+constraints:
+  - expr: "g > 1"
+    reason: "The generator must be greater than 1."
+    severity: error
+  - expr: "h > 1"
+    reason: "The second generator must be greater than 1."
+    severity: error
+  - expr: "g != h"
+    reason: "The two generators must differ, otherwise binding collapses."
+    severity: error
+  - expr: "korleyici % p != 0"
+    reason: "If the blinding value is zero the hiding property is lost."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

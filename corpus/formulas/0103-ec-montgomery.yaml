@@ -1,0 +1,60 @@
+id: 0x0103
+slug: ec-montgomery
+version: 1
+status: active
+
+doc:
+  name: "Montgomery Curve"
+  latex: 'B y^2 = x^3 + A x^2 + x'
+  domain: "elliptic-curves"
+  summary: >
+    A curve form where scalar multiplication runs through the Montgomery
+    ladder, which is both fast and resistant to side channel attacks.
+    Curve25519 has this form.
+  notes: >
+    The Montgomery ladder works on the x coordinate alone and never needs y.
+    That is fast, and because every step performs the same sequence of
+    operations the run time does not depend on the secret key. Every
+    Montgomery curve maps one to one onto a twisted Edwards curve.
+  tags: [ecc, curve, montgomery, curve25519, ladder, side-channel]
+  references:
+    - "Montgomery, Speeding the Pollard and Elliptic Curve Methods of Factorization, 1987"
+    - "RFC 7748, §4.1"
+  related: [0x0101, 0x0104]
+
+params:
+  - name: p
+    type: prime
+    bits: 256
+    role: public
+    description: "Prime characteristic of the field."
+  - name: A
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "Coefficient of the x^2 term."
+  - name: B
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "Coefficient of the y^2 term."
+
+constraints:
+  - expr: "B % p != 0"
+    reason: "B cannot be zero, otherwise the equation does not define a curve."
+    severity: error
+  - expr: "(B * (A**2 - 4)) % p != 0"
+    reason: "If B(A^2 - 4) = 0 the curve is singular."
+    severity: error
+  - expr: "p > 3"
+    reason: "The Montgomery form requires char(F_p) > 3."
+    severity: error
+
+sampler:
+  strategy: mixed
+  max_rejections: 1000
+  catalog:
+    - name: curve25519
+      source: "RFC 7748 §4.1"

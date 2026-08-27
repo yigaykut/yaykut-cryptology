@@ -1,0 +1,67 @@
+id: 0x0503
+slug: vigenere
+version: 1
+status: active
+
+doc:
+  name: "Vigenere Cipher"
+  latex: 'c_i \equiv m_i + k_{(i \bmod \ell)} \pmod{26}'
+  domain: "classical-ciphers"
+  summary: >
+    A polyalphabetic cipher that repeats a keyword of length ell across the
+    message, applying a different shift to every letter. It was considered
+    unbreakable for centuries.
+  notes: >
+    It breaks the frequency weakness of monoalphabetic ciphers: the same
+    letter maps to different letters depending on position, so plain frequency
+    analysis does not work. Kasiski (1863) and Friedman analysis made it
+    possible to find the key length. Once ell is known, the message splits
+    into ell separate Caesar ciphers and each one falls independently to
+    frequency analysis. If the key were as long as the message, fully random
+    and used once, the result would be a one time pad (0x0505) and
+    unbreakable. The only source of weakness is that the key REPEATS.
+  tags: [classical, polyalphabetic, kasiski, friedman, key-reuse]
+  references:
+    - "Kasiski, Die Geheimschriften und die Dechiffrir-Kunst, 1863"
+    - "Stinson, Cryptography: Theory and Practice, §1.1.5"
+  related: [0x0501, 0x0505]
+
+params:
+  - name: key_len
+    type: uint
+    bits: 8
+    role: public
+    description: "Length of the keyword, ell. Leaking it destroys the security."
+  - name: pos
+    type: uint
+    bits: 16
+    role: public
+    description: "Position i of the letter being processed within the message."
+  - name: m
+    type: uint
+    bits: 5
+    role: public
+    description: "Index of the plaintext letter in the alphabet."
+  - name: k
+    type: bytes
+    bits: 320
+    role: secret
+    description: "The keyword, up to 64 letters. NOT written into the ciphertext."
+
+constraints:
+  - expr: "key_len > 0"
+    reason: "The key length must be positive."
+    severity: error
+  - expr: "key_len <= 64"
+    reason: "This entry carries a key of at most 64 letters."
+    severity: error
+  - expr: "m < 26"
+    reason: "The letter index cannot exceed the alphabet size."
+    severity: error
+  - expr: "key_len > 1"
+    reason: "A single letter key reduces Vigenere to the Caesar cipher."
+    severity: warning
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

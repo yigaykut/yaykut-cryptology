@@ -1,0 +1,77 @@
+id: 0x0303
+slug: sunger-yapisi
+version: 1
+status: active
+
+doc:
+  name: "Sponge Construction"
+  latex: 'b = r + c, \quad \text{security} \approx \min(c/2,\ \ell/2)'
+  domain: "hash-mac"
+  summary: >
+    The construction behind Keccak and SHA-3. Built on a fixed width
+    permutation, it processes the message in an absorbing phase and produces
+    output in a squeezing phase.
+  notes: >
+    The state width b splits into a rate r and a capacity c. The message mixes
+    only into the r part; the attacker never touches c directly, and that is
+    where the security comes from. The basic trade: a larger r is faster, but
+    c shrinks and security drops. Unlike Merkle-Damgard it is CLOSED to length
+    extension, because the output is only part of the internal state and the
+    attacker cannot know the remaining c bits. The squeezing phase can produce
+    output of any length, which is what SHAKE uses as an extendable output
+    function.
+  tags: [sponge, keccak, sha3, shake, permutation, capacity]
+  references:
+    - "Bertoni, Daemen, Peeters, Van Assche, Cryptographic Sponge Functions, 2011"
+    - "FIPS 202 (SHA-3)"
+  related: [0x0302, 0x0301]
+
+params:
+  - name: width
+    type: uint
+    bits: 16
+    role: public
+    description: "Total state width b of the permutation, 1600 for Keccak-f[1600]."
+  - name: rate
+    type: uint
+    bits: 16
+    role: public
+    description: "The part r the message mixes into."
+  - name: capacity
+    type: uint
+    bits: 16
+    role: public
+    description: "The part c the attacker cannot touch. Security comes from here."
+  - name: output_bits
+    type: uint
+    bits: 16
+    role: public
+    description: "The requested output length."
+  - name: digest
+    type: bytes
+    bits: 256
+    role: public
+    description: "The digest produced."
+
+constraints:
+  - expr: "rate + capacity == width"
+    reason: "The rate and capacity must add up to the state width."
+    severity: error
+  - expr: "rate > 0"
+    reason: "The rate must be positive, otherwise no message can be absorbed."
+    severity: error
+  - expr: "capacity > 0"
+    reason: "The capacity must be positive, otherwise there is no security margin left."
+    severity: error
+  - expr: "capacity >= 2 * output_bits"
+    reason: "If the capacity is less than twice the output length, collision resistance falls below the target."
+    severity: warning
+
+sampler:
+  strategy: mixed
+  max_rejections: 1000
+  catalog:
+    - name: sha3-256
+      source: "FIPS 202 §6.1"
+    - name: shake128
+      source: "FIPS 202 §6.2"

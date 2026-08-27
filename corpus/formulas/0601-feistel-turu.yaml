@@ -1,0 +1,72 @@
+id: 0x0601
+slug: feistel-turu
+version: 1
+status: active
+
+doc:
+  name: "Feistel Network Round"
+  latex: 'L_{i+1} = R_i, \quad R_{i+1} = L_i \oplus F(R_i, K_i)'
+  domain: "symmetric-stream"
+  summary: >
+    A block cipher structure that splits the block in two halves and mixes
+    them across rounds. DES, Blowfish and Twofish all use this design.
+  notes: >
+    Its most elegant property: the function F DOES NOT HAVE TO BE INVERTIBLE.
+    Decryption runs the same circuit with the round keys in reverse order,
+    which means one hardware circuit serves both encryption and decryption.
+    That was a critical advantage in the 1970s. The Luby-Rackoff theorem: if F
+    is a pseudorandom function, a 3 round Feistel network is a pseudorandom
+    permutation and a 4 round one is a strong pseudorandom permutation. So at
+    least 3 rounds are required, and in practice many more are used (DES has
+    16). AES is NOT a Feistel network; it uses a substitution-permutation
+    network.
+  tags: [feistel, block-cipher, des, luby-rackoff, spn, round-key]
+  references:
+    - "Feistel, Cryptography and Computer Privacy, Scientific American, 1973"
+    - "Luby & Rackoff, SIAM Journal on Computing, 1988"
+  related: [0x0602, 0x0603]
+
+params:
+  - name: half_bits
+    type: uint
+    bits: 16
+    role: public
+    description: "Bit width of each half, 32 for DES."
+  - name: rounds
+    type: uint
+    bits: 8
+    role: public
+    description: "Total number of rounds."
+  - name: L
+    type: bytes
+    bits: 64
+    role: public
+    description: "Left half L_i."
+  - name: R
+    type: bytes
+    bits: 64
+    role: public
+    description: "Right half R_i."
+  - name: K
+    type: bytes
+    bits: 64
+    role: secret
+    description: "Round key K_i. NOT written into the ciphertext."
+
+constraints:
+  - expr: "half_bits > 0"
+    reason: "The half width must be positive."
+    severity: error
+  - expr: "rounds >= 3"
+    reason: "At least 3 rounds are required by the Luby-Rackoff result."
+    severity: error
+  - expr: "half_bits % 8 == 0"
+    reason: "The half width must be a whole number of bytes."
+    severity: error
+  - expr: "rounds >= 8"
+    reason: "3 rounds is the theoretical lower bound; practice needs many more."
+    severity: warning
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

@@ -1,0 +1,29 @@
+# Satır sonlarını depoda LF olarak tut, çalışma kopyasında platforma bırak.
+# Bu olmadan Windows'ta klonlayan biri her dosyayı "değişmiş" görüyor ve
+# fark (diff) okunamaz hale geliyor.
+* text=auto eol=lf
+
+# Kaynak ve belgeler her zaman metin.
+*.py    text
+*.c     text
+*.h     text
+*.md    text
+*.yaml  text
+*.yml   text
+*.json  text
+*.toml  text
+*.txt   text
+*.html  text
+*.css   text
+*.js    text
+
+# İkili dosyalar — dönüştürülmesinler.
+*.png   binary
+*.dll   binary
+*.so    binary
+*.exe   binary
+
+# GitHub dil istatistiği: belgeler ve arayüz varlıkları projeyi
+# "HTML projesi" gibi göstermesin.
+docs/**   linguist-documentation
+webui/** linguist-vendored

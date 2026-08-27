@@ -1,0 +1,70 @@
+id: 0x0102
+slug: ec-weierstrass-genel
+version: 1
+status: active
+
+doc:
+  name: "General Weierstrass Form"
+  latex: 'y^2 + a_1 x y + a_3 y = x^3 + a_2 x^2 + a_4 x + a_6'
+  domain: "elliptic-curves"
+  summary: >
+    The most general elliptic curve equation, valid over any field. Fields of
+    characteristic 2 or 3 cannot be reduced to the short form, so this one is
+    used there.
+  notes: >
+    For char(F) > 3 a change of variables reduces this to the short form
+    (0x0101). For characteristic 2 and 3 that reduction is not possible.
+    Non-singularity is given by the discriminant Delta != 0, where Delta is
+    defined through the intermediate quantities b2, b4, b6 and b8. That
+    expression is too long for the constraint language, so the engine checks
+    it separately.
+  tags: [ecc, curve, weierstrass, general-form, char-2, char-3]
+  references:
+    - "Silverman, The Arithmetic of Elliptic Curves, III.1"
+  related: [0x0101, 0x0103, 0x0104]
+
+params:
+  - name: p
+    type: prime
+    bits: 256
+    role: public
+    description: "Characteristic of the field."
+  - name: a1
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "Coefficient of the xy term."
+  - name: a2
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "Coefficient of the x^2 term."
+  - name: a3
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "Coefficient of the y term."
+  - name: a4
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "Coefficient of the x term."
+  - name: a6
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "Constant term."
+
+constraints:
+  - expr: "p > 1"
+    reason: "The characteristic must be a valid prime."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

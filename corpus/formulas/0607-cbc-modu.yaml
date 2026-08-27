@@ -1,0 +1,65 @@
+id: 0x0607
+slug: cbc-modu
+version: 1
+status: active
+
+doc:
+  name: "Cipher Block Chaining (CBC)"
+  latex: 'c_i = E_K(m_i \oplus c_{i-1}), \quad c_0 = IV'
+  domain: "symmetric-stream"
+  summary: >
+    A mode of operation that XORs each plaintext block with the previous
+    ciphertext block before encrypting. The same block encrypts differently at
+    different positions.
+  notes: >
+    It solves ECB's fundamental flaw, where the same plaintext block always
+    gives the same ciphertext block and patterns in images stay visible even
+    in the ciphertext. Chaining breaks that.
+
+    THE IV MUST BE UNPREDICTABLE. Not repeating is not enough. If an attacker
+    can predict the next IV, they can confirm a guess with a chosen plaintext
+    attack. That is exactly what the BEAST attack on TLS 1.0 was.
+
+    PADDING ORACLE: a system that reports padding validity through a distinct
+    error message allows block by block decryption. Vaudenay showed this in
+    2002. CBC must therefore always be verified first (encrypt-then-MAC) and
+    never decrypted before verification.
+
+    Encryption is sequential and cannot be parallelised; decryption can. CTR
+    (0x0604) is parallel in both directions.
+  tags: [cbc, mode-of-operation, iv, beast, padding-oracle, ecb]
+  references:
+    - "NIST SP 800-38A, §6.2"
+    - "Vaudenay, Security Flaws Induced by CBC Padding, EUROCRYPT 2002"
+  related: [0x0604, 0x0301]
+
+params:
+  - name: iv
+    type: bytes
+    bits: 128
+    role: public
+    description: "Initialisation vector. Must be unpredictable, not merely fresh."
+  - name: blok_no
+    type: uint
+    bits: 32
+    role: public
+    description: "Index i of the block being processed."
+  - name: c_onceki
+    type: bytes
+    bits: 128
+    role: public
+    description: "The previous ciphertext block."
+  - name: c_simdiki
+    type: bytes
+    bits: 128
+    role: public
+    description: "The ciphertext block produced."
+
+constraints:
+  - expr: "blok_no > 0"
+    reason: "Block numbering starts at 1; block zero is the IV."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

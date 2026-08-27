@@ -1,0 +1,55 @@
+id: 0x0605
+slug: chacha-ceyrek-tur
+version: 1
+status: active
+
+doc:
+  name: "ChaCha Quarter Round"
+  latex: 'a \mathrel{+}= b;\ d \mathrel{\oplus}= a;\ d \lll 16;\quad c \mathrel{+}= d;\ b \mathrel{\oplus}= c;\ b \lll 12;\quad a \mathrel{+}= b;\ d \mathrel{\oplus}= a;\ d \lll 8;\quad c \mathrel{+}= d;\ b \mathrel{\oplus}= c;\ b \lll 7'
+  domain: "symmetric-stream"
+  summary: >
+    The basic building block of the ChaCha20 stream cipher. It mixes four 32
+    bit words using addition, XOR and rotation.
+  notes: >
+    It is an ARX design, using only Addition, Rotation and XOR. All three run
+    in time independent of their input, so a constant time implementation
+    comes naturally. The cache timing attacks that hit table based AES
+    implementations do not apply to ChaCha, which is the main reason it is
+    preferred on platforms without hardware AES. The nonlinearity comes only
+    from addition modulo 2^32; XOR and rotation are linear over GF(2). The
+    rotation constants 16, 12, 8 and 7 were chosen to spread diffusion as fast
+    as possible. ChaCha is Salsa20 with those constants and the word order
+    improved. The full cipher applies 20 rounds, which is 10 double rounds.
+  tags: [chacha20, arx, stream-cipher, constant-time, salsa20, rotation]
+  references:
+    - "Bernstein, ChaCha, a variant of Salsa20, 2008"
+    - "RFC 8439, §2.1"
+  related: [0x0604]
+
+params:
+  - name: a
+    type: uint
+    bits: 32
+    role: public
+    description: "First state word."
+  - name: b
+    type: uint
+    bits: 32
+    role: public
+    description: "Second state word."
+  - name: c
+    type: uint
+    bits: 32
+    role: public
+    description: "Third state word."
+  - name: d
+    type: uint
+    bits: 32
+    role: public
+    description: "Fourth state word."
+
+constraints: []
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

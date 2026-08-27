@@ -1,0 +1,60 @@
+id: 0x0208
+slug: moduler-ters
+version: 1
+status: active
+
+doc:
+  name: "Modular Multiplicative Inverse"
+  latex: 'a \cdot a^{-1} \equiv 1 \pmod{m}, \quad \gcd(a, m) = 1'
+  domain: "modular-arithmetic"
+  summary: >
+    The multiplicative inverse of a number under a given modulus, computed
+    with the extended Euclidean algorithm. It appears everywhere, from RSA key
+    generation to elliptic curve point addition.
+  notes: >
+    The inverse exists only when gcd(a, m) = 1. The extended Euclidean
+    algorithm solves ax + my = gcd(a, m), and when the gcd is 1, x is the
+    inverse. SIDE CHANNEL WARNING: the number of steps in the classic extended
+    Euclidean algorithm depends on the inputs and leaks a secret value through
+    run time. If an inverse is taken over secret data, use a constant time
+    variant or Fermat's method (a^(m-2) mod m, when m is prime).
+  tags: [modular-inverse, extended-euclid, constant-time, side-channel, gcd]
+  references:
+    - "Knuth, TAOCP Vol. 2, §4.5.2"
+    - "Bernstein & Yang, Fast Constant-Time GCD Computation, CHES 2019"
+  related: [0x0203, 0x0205]
+
+params:
+  - name: m
+    type: uint
+    bits: 256
+    role: public
+    description: "The modulus."
+  - name: a
+    type: uint
+    bits: 256
+    role: public
+    description: "The value to invert."
+  - name: a_inv
+    type: uint
+    bits: 256
+    role: public
+    description: "The computed inverse."
+
+constraints:
+  - expr: "gcd(a, m) == 1"
+    reason: "If a and m are not coprime there is no multiplicative inverse."
+    severity: error
+  - expr: "m > 1"
+    reason: "The modulus must be greater than 1."
+    severity: error
+  - expr: "a < m"
+    reason: "The input must be reduced modulo the modulus."
+    severity: error
+  - expr: "a_inv < m"
+    reason: "The inverse must be reduced modulo the modulus."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

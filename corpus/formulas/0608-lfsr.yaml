@@ -1,0 +1,62 @@
+id: 0x0608
+slug: lfsr
+version: 1
+status: active
+
+doc:
+  name: "Linear Feedback Shift Register (LFSR)"
+  latex: 's_{t+n} = \bigoplus_{i=0}^{n-1} c_i \, s_{t+i}'
+  domain: "symmetric-stream"
+  summary: >
+    A register that shifts its bits each step and feeds the XOR of selected
+    positions back into the front. Being very cheap in hardware, it was widely
+    used in stream ciphers.
+  notes: >
+    If the feedback polynomial is primitive, an n bit register produces a
+    maximum period of 2^n - 1 and its output passes most statistical tests.
+    FATAL WEAKNESS: it is entirely linear. The Berlekamp-Massey algorithm
+    reconstructs the whole register from just 2n consecutive output bits, so a
+    64 bit LFSR is fully solved after 128 bits of output are seen. It is
+    therefore never used alone; it is combined with nonlinear functions or
+    irregular clocking. A5/1 in GSM and E0 in Bluetooth both took that
+    approach and both were broken.
+  tags: [lfsr, stream-cipher, berlekamp-massey, linear, a5-1, hardware]
+  references:
+    - "Massey, Shift-Register Synthesis and BCH Decoding, IEEE IT-15, 1969"
+    - "Golomb, Shift Register Sequences, 1967"
+  related: [0x0605, 0x0604]
+
+params:
+  - name: uzunluk
+    type: uint
+    bits: 8
+    role: public
+    description: "Register length n, in bits."
+  - name: durum
+    type: uint
+    bits: 64
+    role: public
+    description: "Current contents of the register."
+  - name: polinom
+    type: uint
+    bits: 64
+    role: secret
+    description: "Coefficient mask of the feedback polynomial. NOT written into the ciphertext."
+
+constraints:
+  - expr: "uzunluk > 1"
+    reason: "The register must be at least two bits long."
+    severity: error
+  - expr: "uzunluk <= 64"
+    reason: "This entry carries a register of at most 64 bits."
+    severity: error
+  - expr: "durum != 0"
+    reason: "The all zero state locks up; the register never changes again."
+    severity: error
+  - expr: "uzunluk >= 64"
+    reason: "A short register is reconstructed from 2n output bits with Berlekamp-Massey."
+    severity: warning
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

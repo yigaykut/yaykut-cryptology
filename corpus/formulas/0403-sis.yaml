@@ -1,0 +1,77 @@
+id: 0x0403
+slug: sis
+version: 1
+status: active
+
+doc:
+  name: "SIS, Short Integer Solution"
+  latex: 'A\mathbf{z} \equiv \mathbf{0} \pmod{q}, \quad 0 < \|\mathbf{z}\| \le \beta'
+  domain: "lattice-post-quantum"
+  summary: >
+    For a given matrix A, the problem of finding a non-zero vector z whose
+    norm is bounded by beta. It underlies lattice based signature schemes.
+  notes: >
+    It is considered the twin of LWE: LWE is used on the encryption side, SIS
+    on the signature and hash side, and the relation between them comes from
+    lattice duality. Bounding the norm is essential. Left unbounded, a
+    solution falls out easily with Gaussian elimination. The hardness comes
+    from the requirement that the solution be SHORT. A larger beta makes the
+    problem easier and a larger q makes it harder, and parameter selection
+    balances the two. It is also used to build collision resistant hash
+    functions: if SIS is hard, two different inputs giving the same output
+    would yield a short solution.
+  tags: [sis, lattice, signature, duality, dilithium, collision-resistance]
+  references:
+    - "Ajtai, Generating Hard Instances of Lattice Problems, STOC 1996"
+    - "NIST FIPS 204 (ML-DSA)"
+  related: [0x0401, 0x0402]
+
+params:
+  - name: n
+    type: uint
+    bits: 16
+    role: public
+    description: "Number of matrix rows, the security parameter."
+  - name: m
+    type: uint
+    bits: 16
+    role: public
+    description: "Number of matrix columns, the dimension of the solution vector."
+  - name: q
+    type: uint
+    bits: 32
+    role: public
+    description: "The modulus."
+  - name: beta
+    type: uint
+    bits: 32
+    role: public
+    description: "Upper bound on the norm of the solution vector."
+  - name: rho
+    type: bytes
+    bits: 256
+    role: public
+    description: "Public seed A is expanded from."
+  - name: z
+    type: bytes
+    bits: 3072
+    role: public
+    description: "The short solution vector."
+
+constraints:
+  - expr: "n > 0"
+    reason: "The row count must be positive."
+    severity: error
+  - expr: "beta > 0"
+    reason: "The norm bound must be positive, otherwise only the zero vector fits."
+    severity: error
+  - expr: "q > beta"
+    reason: "If the norm bound exceeds the modulus the constraint becomes meaningless and the problem gets easier."
+    severity: error
+  - expr: "m > n"
+    reason: "There must be more columns than rows, otherwise a non-zero solution is not guaranteed."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

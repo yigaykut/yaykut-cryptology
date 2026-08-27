@@ -1,0 +1,55 @@
+id: 0x0701
+slug: ham-metin
+version: 1
+status: active
+
+doc:
+  name: "Raw Text Transport"
+  latex: 'c = \mathrm{Enc}_K(\ell \,\|\, m \,\|\, \mathrm{dolgu})'
+  domain: "transport"
+  summary: >
+    The entry used to carry free text. It is not a formula; it uses the
+    engine's parameter transport mechanism to send a message directly. The
+    text is encoded as UTF-8 and its real length is kept in a separate field.
+  notes: >
+    Why the length field is needed: the text field is a fixed 1024 bytes and
+    short messages are zero padded, so the decoder has to carry the length to
+    know where the real text ends.
+
+    THE MESSAGE LENGTH DOES NOT LEAK. The length field lives inside the
+    payload and the payload is encrypted with the keystream. On top of that
+    every ciphertext is a fixed 1330 bytes (ADR-007). So a 3 letter message
+    and a 1000 letter message look completely identical from outside.
+
+    LIMIT: a single ciphertext carries at most 1024 bytes of UTF-8. Non ASCII
+    characters take 2 bytes in UTF-8, so the character count is lower. Longer
+    messages need splitting, but since the number of pieces gives away the
+    message length, that brings back part of the leak that was closed. It was
+    deliberately capped at a single block.
+  tags: [transport, message, free-text, utf-8, padding]
+  references: []
+  related: [0x0505]
+
+params:
+  - name: uzunluk
+    type: uint
+    bits: 16
+    role: public
+    description: "Real byte length of the UTF-8 encoded text."
+  - name: metin
+    type: bytes
+    bits: 8192
+    role: public
+    description: "The text, UTF-8. Zero padded to 1024 bytes."
+
+constraints:
+  - expr: "uzunluk > 0"
+    reason: "An empty message cannot be carried."
+    severity: error
+  - expr: "uzunluk <= 1024"
+    reason: "A single ciphertext carries at most 1024 bytes."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

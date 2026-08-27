@@ -1,0 +1,43 @@
+id: 0x0606
+slug: aes-shiftrows
+version: 1
+status: active
+
+doc:
+  name: "AES ShiftRows"
+  latex: 's''_{i,j} = s_{i,\ (j + i) \bmod 4}'
+  domain: "symmetric-stream"
+  summary: >
+    Rotates row i of the AES state matrix left by i places. The first row
+    stays put and the last shifts by three.
+  notes: >
+    On its own it mixes nothing, it only moves bytes around. Its value appears
+    alongside MixColumns: MixColumns mixes only within a column, while
+    ShiftRows carries bytes between columns. Without the pair, a change in one
+    column would never spread to the others. Together they spread a single
+    byte change across the entire 128 bit block within two rounds, which is
+    called full diffusion. It is the transposition layer, from the same family
+    as the classic zigzag cipher (0x0507), but strong because it is used
+    together with substitution and mixing layers.
+  tags: [aes, shiftrows, transport, diffusion, mixcolumns]
+  references:
+    - "FIPS 197 (AES), §5.1.2"
+  related: [0x0603, 0x0602, 0x0507]
+
+params:
+  - name: durum_giris
+    type: bytes
+    bits: 128
+    role: public
+    description: "The 16 byte AES state matrix, in column order."
+  - name: durum_cikis
+    type: bytes
+    bits: 128
+    role: public
+    description: "The state after the rows have been rotated."
+
+constraints: []
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

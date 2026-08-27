@@ -1,0 +1,59 @@
+# ── Python ──
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# ── Build output ──
+# The C core is built from source; the binary does not go into the repo.
+# The reason: `crypto25519.manifest.json`, which records the SHA-256 of the
+# source, only means anything for a locally built library. A prebuilt .dll
+# breaks the chain of trust.
+*.dll
+*.so
+*.dylib
+*.o
+*.obj
+*.gcda
+*.gcno
+*.gcov
+crypto/crypto25519.manifest.json
+
+# ── Local tool settings (machine specific, not portable) ──
+.claude/
+.vscode/
+.idea/
+
+# ── Secrets ──
+# This project does not write keys to disk, but in case one is dropped here
+# by accident:
+*.key
+*.pem
+.env
+
+# ── Generated corpus ──
+# Reproducible byte for byte from the seed
+# (`python -m layer2.generator --count 40 --seed 0`), so keeping it in the
+# repo would be forty files of noise.
+generated_corpus/
+
+# ── Packaging ──
+build/
+dist/
+.coverage
+.coverage.*
+htmlcov/
+
+# ── Build output of the C measurement rig ──
+# `ccore/timing_rdtsc.c` is compiled into a temporary directory, but in case
+# someone builds it by hand locally, keep it out of the repo.
+*.exe
+!**/*.exe.md
+
+# ── Other ──
+# Screenshots and personal files. Anything under `docs/` is kept, because
+# those are documentation.
+*.png
+!docs/*.png

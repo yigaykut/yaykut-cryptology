@@ -1,0 +1,80 @@
+id: 0x0308
+slug: merkle-agac
+version: 1
+status: active
+
+doc:
+  name: "Merkle Tree"
+  latex: 'v_{\text{node}} = H(v_L \,\|\, v_R), \quad |\text{proof}| = \lceil \log_2 N \rceil'
+  domain: "hash-mac"
+  summary: >
+    A binary tree that summarises a large amount of data into a single root.
+    It proves a leaf is in the set without sending the whole set.
+  notes: >
+    The real gain is the proof size. In a tree with N leaves, proving one
+    leaf's membership needs only the sibling nodes along the path to the root,
+    which is log2(N) hashes. For a million leaves that is 20 hashes, 640
+    bytes, where sending the whole set would be 32 MB. Verification is simple:
+    start at the leaf and hash upwards with each sibling in turn, then compare
+    the result against the known root.
+
+    SECOND PREIMAGE TRAP: if internal nodes and leaves are hashed the same
+    way, an attacker can present an internal node as a leaf. The fix is domain
+    separation, prefixing leaf hashes with 0x00 and internal node hashes with
+    0x01. Certificate Transparency does exactly this. With an odd number of
+    leaves, duplicating the last node caused different sets to give the same
+    root in some implementations (CVE-2012-2459, Bitcoin).
+
+    Where it is used: transaction verification in blockchains, Certificate
+    Transparency logs, hash based signatures (SPHINCS+), and chunk
+    verification in distributed file systems.
+  tags: [merkle, tree, membership-proof, log-size, certificate-transparency, sphincs]
+  references:
+    - "Merkle, A Digital Signature Based on a Conventional Encryption Function, CRYPTO 1987"
+    - "RFC 6962 (Certificate Transparency)"
+  related: [0x0302, 0x0305]
+
+params:
+  - name: yaprak_sayisi
+    type: uint
+    bits: 32
+    role: public
+    description: "Total number of leaves N in the tree."
+  - name: yaprak_indeks
+    type: uint
+    bits: 32
+    role: public
+    description: "Position of the leaf whose membership is proved."
+  - name: kanit_uzunlugu
+    type: uint
+    bits: 8
+    role: public
+    description: "Number of sibling nodes in the proof, about log2(N)."
+  - name: kok
+    type: bytes
+    bits: 256
+    role: public
+    description: "Root hash of the tree."
+  - name: yaprak
+    type: bytes
+    bits: 256
+    role: public
+    description: "Hash of the leaf being proved."
+
+constraints:
+  - expr: "yaprak_sayisi > 0"
+    reason: "The tree must contain at least one leaf."
+    severity: error
+  - expr: "yaprak_indeks < yaprak_sayisi"
+    reason: "The leaf index cannot fall outside the tree."
+    severity: error
+  - expr: "kanit_uzunlugu <= 64"
+    reason: "A proof longer than 64 siblings means 2^64 leaves, which is not realistic."
+    severity: error
+  - expr: "2 ** kanit_uzunlugu >= yaprak_sayisi"
+    reason: "The proof cannot be shorter than log2(N); it would not reach the leaf."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 3000

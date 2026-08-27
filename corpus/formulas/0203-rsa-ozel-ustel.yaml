@@ -1,0 +1,58 @@
+id: 0x0203
+slug: rsa-ozel-ustel
+version: 1
+status: active
+
+doc:
+  name: "RSA Private Exponent Derivation"
+  latex: 'd \equiv e^{-1} \pmod{\varphi(n)}'
+  domain: "modular-arithmetic"
+  summary: >
+    Computing the RSA private key from the public exponent e and the totient
+    phi(n). d is the multiplicative inverse of e modulo phi(n), found with the
+    extended Euclidean algorithm.
+  notes: >
+    For the inverse to exist, gcd(e, phi(n)) = 1 is required. That is why e is
+    usually 65537: it is prime and has only two bits set in binary, which
+    speeds up modular exponentiation. A very small d is dangerous. Wiener's
+    attack recovers d directly with continued fractions when d < n^(1/4)/3.
+  tags: [rsa, private-key, modular-inverse, wiener, extended-euclid]
+  references:
+    - "RFC 8017 (PKCS #1 v2.2), §3.2"
+    - "Wiener, Cryptanalysis of Short RSA Secret Exponents, 1990"
+  related: [0x0201, 0x0202, 0x0208]
+
+params:
+  - name: e
+    type: uint
+    bits: 32
+    role: public
+    description: "Public exponent, commonly 65537."
+  - name: phi
+    type: uint
+    bits: 2048
+    role: secret
+    description: "The Euler totient value, (p-1)(q-1)."
+  - name: d
+    type: uint
+    bits: 2048
+    role: secret
+    description: "Private exponent. NOT written into the ciphertext."
+
+constraints:
+  - expr: "gcd(e, phi) == 1"
+    reason: "If e and phi(n) are not coprime, e has no inverse and no key can be generated."
+    severity: error
+  - expr: "e > 2"
+    reason: "e = 1 makes the encryption a no-op and e = 2 is not invertible."
+    severity: error
+  - expr: "e % 2 == 1"
+    reason: "The public exponent must be odd."
+    severity: error
+  - expr: "d < phi"
+    reason: "The private exponent must be reduced modulo phi(n)."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

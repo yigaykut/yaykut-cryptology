@@ -1,0 +1,70 @@
+id: 0x0108
+slug: ec-teget-kurali
+version: 1
+status: active
+
+doc:
+  name: "Elliptic Curve Point Doubling (Tangent Rule)"
+  latex: '\lambda = \frac{3x_1^2 + a}{2y_1}, \quad x_3 = \lambda^2 - 2x_1, \quad y_3 = \lambda(x_1 - x_3) - y_1'
+  domain: "elliptic-curves"
+  summary: >
+    Adding a point to itself. The result is the reflection about the x axis of
+    the second point where the tangent meets the curve.
+  notes: >
+    This is the chord rule (0x0105) in the case P = Q. When two points
+    coincide, the line through them becomes the tangent, so the slope comes
+    from implicit differentiation: differentiating both sides of y^2 = x^3 +
+    ax + b gives 2y*y' = 3x^2 + a.
+
+    It is the building block of scalar multiplication. Computing kQ runs the
+    double-and-add algorithm, and most of its steps are doublings.
+
+    SIDE CHANNEL: naive double-and-add adds when the key bit is 1 and does not
+    when it is 0. Run time and power consumption leak the key bits directly.
+    The Montgomery ladder (0x0103) closes that leak by performing the same
+    operations at every step.
+
+    When y_1 = 0 the formula is undefined. The point is 2-torsion and its
+    double is the point at infinity.
+  tags: [ecc, point-doubling, tangent, scalar-multiplication, side-channel, double-and-add]
+  references:
+    - "Silverman, The Arithmetic of Elliptic Curves, III.2"
+    - "SEC 1: Elliptic Curve Cryptography, v2.0, §2.2.1"
+  related: [0x0105, 0x0101, 0x0103]
+
+params:
+  - name: p
+    type: prime
+    bits: 256
+    role: public
+    description: "Prime characteristic of the field."
+  - name: a
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "First degree coefficient of the curve."
+  - name: x1
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "x coordinate of the point being doubled."
+  - name: y1
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "y coordinate of the point being doubled. Cannot be zero."
+
+constraints:
+  - expr: "y1 % p != 0"
+    reason: "If y = 0 the tangent is vertical; the double of the point is the point at infinity."
+    severity: error
+  - expr: "p > 3"
+    reason: "The short Weierstrass form requires char(F_p) > 3."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

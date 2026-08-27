@@ -1,0 +1,19 @@
+# The corpus layer
+PyYAML>=6.0
+jsonschema>=4.20
+
+# Katman 2 — distinguisher
+numpy>=1.26
+torch>=2.2
+# NOTE: the installed build is CPU only (2.10.0+cpu), which is enough for
+# models at this scale. For GPU training the CUDA wheel has to be installed
+# separately:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124
+
+# Test
+pytest>=8.0
+
+# The C core (optional, python ccore/build.py)
+# NO new dependency: loading goes through ctypes, which is in the standard
+# library. On Windows setuptools is used to find MSVC; failing that gcc or
+# clang is tried, and failing that the project keeps running in pure Python.

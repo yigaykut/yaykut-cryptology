@@ -1,0 +1,78 @@
+id: 0x0402
+slug: ring-lwe
+version: 1
+status: active
+
+doc:
+  name: "Ring-LWE, Learning With Errors Over a Ring"
+  latex: 'b(x) = a(x) \cdot s(x) + e(x) \in R_q = \mathbb{Z}_q[x]/(x^n + 1)'
+  domain: "lattice-post-quantum"
+  summary: >
+    LWE defined over a polynomial ring. It uses polynomial multiplication
+    instead of a matrix, which cuts the key size and the computation cost
+    substantially.
+  notes: >
+    Plain LWE has to carry an n by n matrix. Ring-LWE expresses the same
+    structure with a single polynomial of n coefficients, shrinking the key by
+    a factor of n. Multiplication modulo x^n + 1 also runs in O(n log n) with
+    the Number Theoretic Transform, which is where Kyber's and Dilithium's
+    speed comes from. THE TRADE: the ring structure brings extra algebraic
+    symmetry. No attack exploiting that symmetry is known today, but it is
+    considered less conservative than plain LWE. Module-LWE strikes a balance
+    between the two and is the path NIST chose. n is usually a power of two,
+    which is when x^n + 1 is irreducible.
+  tags: [ring-lwe, ntt, kyber, dilithium, polynomial-ring, module-lwe]
+  references:
+    - "Lyubashevsky, Peikert, Regev, On Ideal Lattices and Learning with Errors Over Rings, EUROCRYPT 2010"
+    - "NIST FIPS 203 (ML-KEM), FIPS 204 (ML-DSA)"
+  related: [0x0401, 0x0404]
+
+params:
+  - name: n
+    type: uint
+    bits: 16
+    role: public
+    description: "Polynomial degree. Must be a power of two, 256 in Kyber."
+  - name: q
+    type: uint
+    bits: 32
+    role: public
+    description: "Coefficient modulus, 3329 in Kyber."
+  - name: a
+    type: bytes
+    bits: 3072
+    role: public
+    description: "Public polynomial, 256 coefficients of 12 bits."
+  - name: b
+    type: bytes
+    bits: 3072
+    role: public
+    description: "Sample polynomial."
+  - name: s
+    type: bytes
+    bits: 3072
+    role: secret
+    description: "Secret polynomial. NOT written into the ciphertext."
+  - name: e
+    type: bytes
+    bits: 3072
+    role: secret
+    description: "Small error polynomial."
+
+constraints:
+  - expr: "n > 0"
+    reason: "The polynomial degree must be positive."
+    severity: error
+  - expr: "q > 1"
+    reason: "The modulus must be greater than 1."
+    severity: error
+  - expr: "n % 2 == 0"
+    reason: "n must be even, and preferably a power of two, so that x^n + 1 is irreducible."
+    severity: error
+
+sampler:
+  strategy: mixed
+  max_rejections: 1000
+  catalog:
+    - name: kyber-768
+      source: "NIST FIPS 203"

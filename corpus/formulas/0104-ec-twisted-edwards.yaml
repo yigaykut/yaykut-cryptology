@@ -1,0 +1,64 @@
+id: 0x0104
+slug: ec-twisted-edwards
+version: 1
+status: active
+
+doc:
+  name: "Twisted Edwards Curve"
+  latex: 'a x^2 + y^2 = 1 + d x^2 y^2'
+  domain: "elliptic-curves"
+  summary: >
+    A curve form where point addition works the same way for every input. It
+    is the basis of the Ed25519 signature scheme.
+  notes: >
+    Its most important property is that the addition formula is complete:
+    equal points and the point at infinity need no separate branch. That
+    removes at the root the side channel attacks where the timing difference
+    between branches in the Weierstrass form leaks the secret key.
+    Completeness requires d to be a non-square in the field, a condition the
+    constraint language cannot express, so the engine checks it.
+  tags: [ecc, curve, edwards, ed25519, complete-addition, side-channel]
+  references:
+    - "Bernstein, Birkner, Joye, Lange, Peters, Twisted Edwards Curves, AFRICACRYPT 2008"
+    - "RFC 8032"
+  related: [0x0101, 0x0103]
+
+params:
+  - name: p
+    type: prime
+    bits: 256
+    role: public
+    description: "Prime characteristic of the field."
+  - name: a
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "Twist coefficient. With a=1 the curve is in classic Edwards form."
+  - name: d
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "Curve coefficient."
+
+constraints:
+  - expr: "a % p != 0"
+    reason: "a cannot be zero."
+    severity: error
+  - expr: "d % p != 0"
+    reason: "d cannot be zero, otherwise the curve degenerates."
+    severity: error
+  - expr: "(a - d) % p != 0"
+    reason: "If a = d the curve is singular."
+    severity: error
+  - expr: "p > 3"
+    reason: "The Edwards form requires char(F_p) > 3."
+    severity: error
+
+sampler:
+  strategy: mixed
+  max_rejections: 1000
+  catalog:
+    - name: ed25519
+      source: "RFC 8032 §5.1"

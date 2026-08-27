@@ -1,0 +1,86 @@
+id: 0x0804
+slug: kor-imza
+version: 1
+status: active
+
+doc:
+  name: "Blind Signature (RSA)"
+  latex: "m' = m r^{e} \\bmod n, \\quad s' = (m')^{d}, \\quad s = s' r^{-1} = m^{d} \\bmod n"
+  domain: "protocols"
+  summary: >
+    Lets a signer sign a message without seeing its contents. The signature is
+    unblinded afterwards and stays valid.
+  notes: >
+    It works because of RSA's multiplicative homomorphism. The signer sees
+    m*r^e, and since r is random that value is uniformly distributed and says
+    nothing about m.
+
+    Unblinding is one line of algebra:
+
+    s' = (m*r^e)^d = m^d * r^(ed) = m^d * r, because ed = 1 mod phi(n)
+
+    Multiplying by r^(-1) leaves s = m^d, a valid signature on m.
+
+    UNLINKABILITY: when the signer later sees the published pair (m, s), they
+    cannot tell which blinding session produced it. That is the property
+    secret ballots and anonymous digital cash need.
+
+    DANGER: the signer does not know what they are signing. A user asking for
+    a 1 unit banknote to be signed could blind a 1000 unit document instead.
+    Real systems therefore use cut-and-choose verification, or separate key
+    pairs for separate denominations.
+
+    Chaum proposed this scheme for anonymous digital cash in 1982; it is the
+    ancestor of today's privacy focused payment protocols.
+  tags: [blind-signature, chaum, anonymity, homomorphic, secret-ballot, digital-cash]
+  references:
+    - "Chaum, Blind Signatures for Untraceable Payments, CRYPTO 1982"
+  related: [0x0201, 0x0203, 0x0803]
+
+params:
+  - name: n
+    type: uint
+    bits: 1024
+    role: public
+    description: "The signer's RSA modulus."
+  - name: e
+    type: uint
+    bits: 32
+    role: public
+    description: "Public exponent."
+  - name: korlenmis
+    type: uint
+    bits: 1024
+    role: public
+    description: "The blinded message m*r^e going to the signer."
+  - name: kor_imza
+    type: uint
+    bits: 1024
+    role: public
+    description: "The blinded signature s' the signer returns."
+  - name: korleyici
+    type: uint
+    bits: 1024
+    role: secret
+    description: "Blinding factor r. Known only to the user, never revealed."
+
+constraints:
+  - expr: "e % 2 == 1"
+    reason: "The public exponent must be odd."
+    severity: error
+  - expr: "e >= 3"
+    reason: "e = 1 makes the signing a no-op."
+    severity: error
+  - expr: "korlenmis < n"
+    reason: "The blinded message must be reduced modulo the modulus."
+    severity: error
+  - expr: "kor_imza < n"
+    reason: "The signature must be reduced modulo the modulus."
+    severity: error
+  - expr: "korleyici > 1"
+    reason: "r = 1 blinds nothing and the message travels in the clear."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

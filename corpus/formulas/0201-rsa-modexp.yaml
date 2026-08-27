@@ -1,0 +1,66 @@
+id: 0x0201
+slug: rsa-modexp
+version: 2
+status: active
+
+doc:
+  name: "RSA Modular Exponentiation"
+  latex: 'c \equiv m^{e} \pmod{n}'
+  domain: "modular-arithmetic"
+  summary: >
+    The core operation of RSA encryption. The ciphertext c comes from raising
+    the message m to a modular power under the public key (n, e).
+  notes: >
+    Textbook RSA, without padding, is deterministic: the same message always
+    gives the same ciphertext. That lets an attacker encrypt candidate
+    messages one by one and compare, which destroys semantic security. It is
+    also multiplicatively homomorphic, E(m1)*E(m2) = E(m1*m2), and that
+    property opens the door to chosen ciphertext attacks. OAEP padding breaks
+    both the determinism and the homomorphism. The exponentiation has to be
+    constant time; a naive square-and-multiply leaks the bits of the secret
+    exponent through its run time.
+  tags: [rsa, modular-exponentiation, public-key, oaep, homomorphic, constant-time]
+  references:
+    - "RFC 8017 (PKCS #1 v2.2), §5.1.1"
+    - "Rivest, Shamir, Adleman, CACM 21(2), 1978"
+  related: [0x0202, 0x0203, 0x0204, 0x0207]
+
+params:
+  - name: n
+    type: uint
+    bits: 2048
+    role: public
+    description: "The modulus, a product of two large primes."
+  - name: e
+    type: uint
+    bits: 32
+    role: public
+    description: "Public exponent, commonly 65537."
+  - name: m
+    type: uint
+    bits: 2048
+    role: public
+    description: "Message representative, as an integer."
+  - name: padding
+    type: enum
+    values: [none, pkcs1v15, oaep-sha256]
+    role: public
+    description: "Which padding scheme is applied. A 2 bit index travels on the wire."
+
+constraints:
+  - expr: "e % 2 == 1"
+    reason: "The public exponent must be odd."
+    severity: error
+  - expr: "e >= 3"
+    reason: "e = 1 makes the encryption a no-op."
+    severity: error
+  - expr: "m < n"
+    reason: "The message representative must be smaller than the modulus, otherwise information is lost."
+    severity: error
+  - expr: "padding != 'none'"
+    reason: "Unpadded RSA is deterministic and fragile, so it is for teaching and testing only."
+    severity: warning
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

@@ -1,0 +1,88 @@
+id: 0x0802
+slug: schnorr-kimlik-kaniti
+version: 1
+status: active
+
+doc:
+  name: "Schnorr Identification Proof"
+  latex: 's = r + c x \pmod{q}, \quad g^{s} = R \cdot y^{c}'
+  domain: "protocols"
+  summary: >
+    A zero knowledge protocol proving you hold a private key without revealing
+    it. It has three steps: commitment, challenge and response.
+  notes: >
+    The flow: the prover picks a random r and sends the commitment R = g^r;
+    the verifier sends a random challenge c; the prover answers s = r + cx.
+    The verifier checks g^s = R * y^c.
+
+    WHY IT IS ZERO KNOWLEDGE: the verifier could have produced the triple (R,
+    c, s) without ever knowing the private key, by picking s and c first and
+    computing R = g^s * y^(-c). So the transcript carries no information,
+    because the same thing can be produced without the prover.
+
+    CRITICAL: r must be fresh on every proof. If the same r is used for two
+    different challenges c, two equations fall out and x is solved directly.
+    It is the same nonce reuse catastrophe as in ECDSA (0x0106).
+
+    The Fiat-Shamir transform makes it non-interactive: c is derived from a
+    hash of the message rather than from a challenge. That is how the Schnorr
+    signature comes about.
+  tags: [schnorr, zero-knowledge, fiat-shamir, nonce, discrete-log]
+  references:
+    - "Schnorr, Efficient Signature Generation by Smart Cards, J. Cryptology 4, 1991"
+  related: [0x0106, 0x0206]
+
+params:
+  - name: q
+    type: prime
+    bits: 128
+    role: public
+    description: "Group order."
+  - name: taahhut
+    type: field_element
+    mod: q
+    bits: 128
+    role: public
+    description: "R = g^r, the prover's first message."
+  - name: meydan_okuma
+    type: scalar
+    mod: q
+    bits: 128
+    role: public
+    description: "c, the verifier's random challenge."
+  - name: cevap
+    type: scalar
+    mod: q
+    bits: 128
+    role: public
+    description: "s = r + cx mod q."
+  - name: gizli
+    type: scalar
+    mod: q
+    bits: 128
+    role: secret
+    description: "The private key x being proved. NOT written into the ciphertext."
+  - name: nonce
+    type: scalar
+    mod: q
+    bits: 128
+    role: secret
+    description: "Commitment nonce r. Fresh on every proof, never repeated."
+
+constraints:
+  - expr: "q > 2"
+    reason: "The group order must be an odd prime."
+    severity: error
+  - expr: "nonce % q != 0"
+    reason: "If r is zero the commitment is fixed and the proof collapses."
+    severity: error
+  - expr: "gizli % q != 0"
+    reason: "The private key cannot be zero."
+    severity: error
+  - expr: "cevap < q"
+    reason: "The response must be reduced modulo the group order."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

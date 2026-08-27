@@ -1,0 +1,54 @@
+id: 0x020B
+slug: legendre-sembolu
+version: 1
+status: active
+
+doc:
+  name: "Legendre Symbol"
+  latex: '\left(\frac{a}{p}\right) \equiv a^{(p-1)/2} \pmod{p}'
+  domain: "modular-arithmetic"
+  summary: >
+    A function saying whether a is a perfect square modulo p. It is +1 for a
+    square, -1 otherwise, and 0 when a is divisible by p.
+  notes: >
+    Also known as Euler's criterion. It is used directly when decompressing
+    elliptic curve points: recovering y from the x coordinate needs a square
+    root, and this symbol first checks whether one exists. It can also be
+    computed without exponentiation. Quadratic reciprocity gives a recursion
+    resembling the Euclidean algorithm that finishes in logarithmic steps, far
+    faster than modular exponentiation. SIDE CHANNEL: if the result depends on
+    a secret value, branching on it leaks timing. Constant time
+    implementations compute both branches.
+  tags: [legendre, quadratic-residue, euler-criterion, square-root, point-compression]
+  references:
+    - "Ireland & Rosen, A Classical Introduction to Modern Number Theory, §5"
+  related: [0x0205, 0x0101]
+
+params:
+  - name: p
+    type: prime
+    bits: 32
+    role: public
+    description: "Odd prime modulus."
+  - name: a
+    type: uint
+    bits: 32
+    role: public
+    description: "The value being tested for quadratic residuosity."
+  - name: sonuc
+    type: enum
+    values: ["sifir", "kare", "kare-degil"]
+    role: public
+    description: "0, +1 or -1. A 2 bit index travels on the wire."
+
+constraints:
+  - expr: "p > 2"
+    reason: "The Legendre symbol is defined for an odd prime modulus."
+    severity: error
+  - expr: "a < p"
+    reason: "The input must be reduced modulo the modulus."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

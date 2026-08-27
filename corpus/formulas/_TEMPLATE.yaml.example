@@ -1,0 +1,243 @@
+# ══════════════════════════════════════════════════════════════════════════
+#  TEMPLATE, a real example filled in end to end with the affine cipher
+# ══════════════════════════════════════════════════════════════════════════
+#
+#  This file is not an empty skeleton. Copy it, change its id and name, and
+#  you have a WORKING corpus entry. Read it first, then adapt it.
+#
+#  HOW TO USE IT
+#    1. Copy this file
+#    2. CHANGE the id       (0x05FF is the template slot, never a real entry)
+#    3. Rename it:          0506-my-formula.yaml
+#    4. Change the values to match your own formula
+#    5. Check it:           python corpus/validate.py
+#
+#  If the concepts are unfamiliar, read this first:  corpus/HOW-TO-ADD.md
+#
+#  ── THE ONE THING TO REMEMBER ────────────────────────────────────────────
+#  This file is a BLANK FORM DESIGN. It holds no real numbers.
+#  You say "there will be a 5 bit number here called m", not the value 17.
+#  The real values appear when somebody encrypts something.
+#  ─────────────────────────────────────────────────────────────────────────
+#
+#  The .example extension keeps the validator from reading this file. Save
+#  your copy as .yaml and it starts being read.
+#
+#  NOTE: this template used to use the Caesar cipher. The 0x0501 Caesar entry
+#  was retired on 2026-08-12 (ADR-009), so the example moved to the affine
+#  cipher, which is Caesar generalised with a multiplier.
+
+
+# ═══ IDENTITY ═════════════════════════════════════════════════════════════
+
+# 0x05FF IS THE TEMPLATE SLOT. Do not put this file in the corpus without
+# giving it your own number.
+# Ids are written in hex because the block grouping is easy to read:
+# 0x0502 means "block 05, entry 2".
+#   0x01xx elliptic curves    0x02xx modular arithmetic   0x03xx hash/MAC
+#   0x04xx lattice/post-quantum   0x05xx classical   0x06xx symmetric/stream
+# NEVER reuse an id you have used once, even if you retire the entry.
+id: 0x05FF
+
+# A human readable name. It shows up in filenames and error messages.
+# It never enters the ciphertext. Lowercase, words joined by hyphens.
+slug: sablon-ornegi
+
+# Bump this only when you fix the doc block, the descriptions or the sampler.
+# If params or a constraint's expr or severity change, do NOT bump version.
+# Open a new id instead, because old ciphertexts would decode wrong (ADR-003).
+version: 1
+
+# active     = in use
+# deprecated = do not encrypt with it, kept so old messages still decode
+# retired    = a historical record; the engine DOES NOT ENCRYPT with it
+status: active
+
+
+# ═══ LAYER 3: doc, FOR HUMANS AND SEARCH ══════════════════════════════════
+# The engine NEVER READS this block. Change anything here you like and the
+# encryption behaviour does not shift at all. Free text, relax.
+#
+# The assistant (layer 3) searches through this, so write summary and notes
+# in plain sentences rather than as keyword lists.
+
+doc:
+  name: "Affine Cipher (template example)"
+
+  # The formula itself. Do NOT put $ signs around it.
+  # Use single quotes so backslashes stay as written and need no doubling.
+  latex: 'c \equiv a m + b \pmod{26}'
+
+  # The top level category. Keep it consistent with the id block above.
+  domain: "classical-ciphers"
+
+  # 1 to 3 sentences. The assistant looks here MOST when searching, so say
+  # in plain words what the formula is for.
+  summary: >
+    A classic substitution cipher that multiplies each letter by a and then
+    shifts it by b. Decryption requires a to be invertible modulo 26.
+
+  # Optional. A longer explanation, the traps, the history, when not to use it.
+  notes: >
+    Being a linear transformation it preserves the ranking of letter
+    frequencies and is fully open to frequency analysis. Two letters of known
+    plaintext give up the key directly. The total key space is 12 x 26 = 312.
+
+  # Free form tags for search and filtering.
+  tags: [classical, affine, modular-inverse, sablon]
+
+  # References so the assistant can cite a source. Optional.
+  references:
+    - "Stinson, Cryptography: Theory and Practice, §1.1.3"
+
+  # Ids of related formulas. You can list ones that are not written yet;
+  # the validator only warns, it does not error.
+  related: []
+
+
+# ═══ LAYER 1: params, WHERE THE REAL WORK IS ══════════════════════════════
+#
+# For each parameter you answer three questions:
+#   1. What is it called?     -> name   (use the symbol from the formula)
+#   2. What kind of thing?    -> type
+#   3. How many bits?         -> bits
+#
+# TYPES
+#   uint           a plain integer                    -> needs bits
+#   prime          a prime, used as a modulus         -> needs bits
+#   field_element  a number living in a mod p world   -> needs bits + mod
+#   scalar         a number modulo the group order    -> needs bits + mod
+#   point          a point (x,y) on a curve           -> needs bits + curve
+#   enum           a choice from a fixed list         -> needs values
+#   bytes          a raw byte string                  -> needs bits
+#   If in doubt, pick uint.
+#
+# WHAT bits MEANS: it sets the largest value the number can hold.
+#   bits: 5     -> 0 to 31           (enough for a letter)
+#   bits: 8     -> 0 to 255          (a single byte)
+#   bits: 32    -> 0 to about 4e9    (an RSA public exponent)
+#   bits: 256   -> 0 to about 1e77   (elliptic curves)
+#   bits: 2048  -> astronomical      (an RSA modulus)
+#   Pick the SMALLEST width that is enough. The width is fixed, so small
+#   values take the same space. That is deliberate: variable length would
+#   leak the magnitude of the number.
+#
+# TWO ORDERING RULES
+#   - List order is ciphertext order. It is significant.
+#   - If a parameter refers to another through "mod:", the target has to come
+#     BEFORE it. That rule makes circular references impossible.
+
+params:
+  # -- the letter being encrypted --
+  - name: m
+    type: uint
+    bits: 5                  # range 0 to 31; we need 0 to 25, so 5 bits is enough
+    role: public             # WRITTEN into the ciphertext
+    description: "Index of the plaintext letter in the alphabet (A=0, B=1, ... Z=25)."
+
+  # -- multiplier key --
+  - name: a
+    type: uint
+    bits: 5
+    # role: secret means this value is NOT written into the ciphertext.
+    # a and b together are the key; putting them in the ciphertext would hand
+    # the cipher to everyone. The other side already knows the key.
+    #
+    # role options:
+    #   public  -> written into the ciphertext. THE DEFAULT, most params.
+    #   secret  -> not written, part of the key.
+    #   derived -> not written, computed from the other parameters.
+    # Only public parameters count toward the payload size.
+    role: secret
+    description: "Multiplier key. Must be coprime to 26."
+
+  # -- shift key --
+  - name: b
+    type: uint
+    bits: 5
+    role: secret
+    description: "Shift key."
+
+
+# ═══ LAYER 1: constraints, THE VALIDITY RULES ═════════════════════════════
+#
+# The mathematical conditions the parameters have to satisfy. They are
+# checked before encryption and after decoding.
+#
+# WHAT YOU CAN USE INSIDE expr, and this is the whole list:
+#   - The names you defined above:  m, a, b
+#   - Arithmetic:      +  -  *  /  //  %  **
+#   - Comparison:      <  <=  >  >=  ==  !=
+#   - Logic:           and  or  not
+#   - Functions:       abs  min  max  pow  gcd  len
+#
+# Nothing else works. Calling other functions, importing, reading files, all
+# rejected. That is deliberate: a corpus file might one day come from
+# outside, and a constraint expression must never run arbitrary code.
+#
+# TIP: constraints shaped '<name> < <constant>' make the sampler's job
+# easier; a sampling range is inferred from that pattern (see ADR-006).
+
+constraints:
+  - expr: "gcd(a, 26) == 1"
+    reason: "If a is not invertible the cipher cannot be decrypted; gcd(a,26)=1 is required."
+    severity: error          # error rejects | warning warns and continues
+
+  - expr: "m < 26"
+    reason: "The letter index cannot exceed the alphabet size (A=0 ... Z=25)."
+    severity: error
+
+  - expr: "a < 26"
+    reason: "The multiplier must be reduced modulo the alphabet size."
+    severity: error
+
+  - expr: "b < 26"
+    reason: "The shift must be reduced modulo the alphabet size."
+    severity: error
+
+  - expr: "a != 1 or b != 0"
+    reason: "a=1 with b=0 is the identity transformation and encrypts nothing."
+    severity: warning
+
+
+# ═══ LAYER 2: sampler, RANDOM TEST DATA ═══════════════════════════════════
+#
+# So the distinguisher can build training data, you say how valid parameters
+# are generated at random.
+#
+#   uniform_valid  -> generate at random, discard if constraints fail, retry
+#   from_catalog   -> use only the known values listed under catalog
+#   mixed          -> a combination of the two
+#
+# If in doubt write uniform_valid and move on. For most formulas that is the
+# right answer.
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000
+
+  # For from_catalog or mixed it looks like this:
+  #
+  # catalog:
+  #   - name: secp256k1
+  #     source: "SEC 2 v2.0"
+  #
+  # WARNING: do NOT type 256 bit constants here by hand. Give only the name;
+  # the values are resolved from a standard library and checked against test
+  # vectors. Hand typed large constants are silently wrong for weeks.
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  THE PAYLOAD SIZE OF THIS EXAMPLE
+#
+#    m  ->  5 bits   (public, counted)
+#    a  ->  0 bits   (secret, not written into the ciphertext)
+#    b  ->  0 bits   (secret, not written into the ciphertext)
+#    ──────────────
+#    5 bits total = 1 byte of real data
+#
+#  But the text SENT is 1330 bytes, because the payload is padded to a fixed
+#  size. The reason is ADR-007: variable length gave away which formula was
+#  used. Before padding, the distinguisher identified 82.6% of formulas from
+#  the length alone; after padding it was 2.1%, which is chance level.
+# ══════════════════════════════════════════════════════════════════════════

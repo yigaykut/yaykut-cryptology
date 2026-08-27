@@ -1,0 +1,69 @@
+id: 0x0406
+slug: lll-indirgeme
+version: 1
+status: active
+
+doc:
+  name: "LLL Lattice Basis Reduction"
+  latex: '\|\mathbf{b}_1\| \le 2^{(n-1)/4} \, |\det(L)|^{1/n}, \quad \delta \in (1/4, 1)'
+  domain: "lattice-post-quantum"
+  summary: >
+    A polynomial time algorithm turning a skewed lattice basis into one whose
+    vectors are short and close to orthogonal. It is the main attack tool
+    against lattice cryptography.
+  notes: >
+    It does not solve the shortest vector problem EXACTLY, it finds a short
+    vector within an exponential approximation factor. Even that is
+    surprisingly powerful, and in low dimensions it comes very close to
+    optimal in practice. Parameter selection for lattice cryptography is made
+    directly against it: dimensions are chosen large enough that LLL and its
+    successors (BKZ) cannot find a short vector in reasonable time. In other
+    words the security depends on the answer to "how good is this algorithm".
+
+    It is devastating outside lattices too. Combined with Coppersmith's method
+    it breaks RSA with a small exponent, partial key leaks, and ECDSA with
+    weak nonces. If a few bits of an ECDSA nonce leak, a lattice built from a
+    few hundred signatures gives up the private key through LLL.
+
+    The delta parameter trades quality against speed. The closer to 1, the
+    better the basis and the longer it takes. 0.99 is the common choice.
+  tags: [lll, lattice-reduction, see-also, coppersmith, ecdsa-nonce, shortest-vector]
+  references:
+    - "Lenstra, Lenstra, Lovász, Factoring polynomials with rational coefficients, 1982"
+    - "Howgrave-Graham & Smart, Lattice Attacks on Digital Signature Schemes, 2001"
+  related: [0x0403, 0x0401, 0x0106]
+
+params:
+  - name: boyut
+    type: uint
+    bits: 16
+    role: public
+    description: "Dimension of the lattice n."
+  - name: delta_binde
+    type: uint
+    bits: 16
+    role: public
+    description: "The Lovasz parameter in thousandths, so 990 means 0.99."
+  - name: taban
+    type: bytes
+    bits: 2048
+    role: public
+    description: "The reduced basis vectors, serialised."
+
+constraints:
+  - expr: "boyut >= 2"
+    reason: "Reduction is meaningless in a one dimensional lattice."
+    severity: error
+  - expr: "delta_binde > 250"
+    reason: "The Lovasz parameter must be greater than 1/4."
+    severity: error
+  - expr: "delta_binde < 1000"
+    reason: "The Lovasz parameter must be less than 1; delta = 1 does not guarantee termination."
+    severity: error
+  - expr: "delta_binde >= 750"
+    reason: "Below 0.75 the reduction quality is too low for practical use."
+    severity: warning
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 2000

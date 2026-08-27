@@ -1,0 +1,49 @@
+id: 0x0205
+slug: fermat-kucuk-teoremi
+version: 1
+status: active
+
+doc:
+  name: "Fermat's Little Theorem"
+  latex: 'a^{p-1} \equiv 1 \pmod{p}, \quad p \nmid a'
+  domain: "modular-arithmetic"
+  summary: >
+    If p is prime and a is not divisible by p, then a to the power p-1 is
+    congruent to 1 modulo p. It underlies primality tests and modular
+    inversion.
+  notes: >
+    The converse is NOT true. There are composite numbers that satisfy the
+    condition, called Fermat pseudoprimes. Carmichael numbers (561, 1105, 1729
+    and so on) pass the test for every base, which is why a plain Fermat test
+    is not reliable. In practice Miller-Rabin or Baillie-PSW is used. The
+    theorem also gives a^(p-2) = a^(-1) mod p, an alternative to the extended
+    Euclidean algorithm for inverting under a prime modulus.
+  tags: [fermat, primality-test, carmichael, modular-inverse, miller-rabin]
+  references:
+    - "Hardy & Wright, An Introduction to the Theory of Numbers, §6.3"
+  related: [0x0202, 0x0208]
+
+params:
+  - name: p
+    type: prime
+    bits: 256
+    role: public
+    description: "Prime modulus."
+  - name: a
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "The base. Must not be divisible by p."
+
+constraints:
+  - expr: "a % p != 0"
+    reason: "If a is divisible by p the theorem does not apply."
+    severity: error
+  - expr: "p > 2"
+    reason: "The modulus must be an odd prime."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

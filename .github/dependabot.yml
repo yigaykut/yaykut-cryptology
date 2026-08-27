@@ -1,0 +1,36 @@
+# Dependency updates.
+#
+# The workflow pins its actions to commit hashes, which is the safe way to
+# depend on someone else's code but also the way that goes stale quietly: a
+# pinned hash never picks up a security fix on its own. Dependabot is the
+# other half of that arrangement. It opens a pull request when a pin falls
+# behind, so the update arrives as a diff to read rather than as a silent
+# change under a tag.
+#
+# Weekly rather than daily. This is a research project with one author, and
+# a queue of pull requests nobody reads is worse than none.
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    labels:
+      - dependencies
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: deps
+    labels:
+      - dependencies
+    # torch is installed in CI from the PyTorch CPU index, not from PyPI, and
+    # the version there does not line up with what Dependabot would propose.
+    # Its updates are handled by hand.
+    ignore:
+      - dependency-name: torch

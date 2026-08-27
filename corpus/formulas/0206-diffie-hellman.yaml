@@ -1,0 +1,71 @@
+id: 0x0206
+slug: diffie-hellman
+version: 1
+status: active
+
+doc:
+  name: "Diffie-Hellman Key Exchange"
+  latex: 'K = g^{ab} = (g^a)^b = (g^b)^a \pmod{p}'
+  domain: "modular-arithmetic"
+  summary: >
+    The first public key protocol, letting two parties derive a shared secret
+    over a channel someone is listening to. Each applies their private
+    exponent to the other's public value and both arrive at the same result.
+  notes: >
+    There is NO authentication. It is directly open to a man in the middle,
+    who can agree separately with each side and decrypt and re-encrypt the
+    traffic. It therefore has to be used together with a signature or a
+    certificate. p should be a safe prime (p = 2q+1 with q prime), otherwise
+    small subgroup confinement is possible. The Logjam attack showed that
+    widely shared weak 512 bit parameters can be broken with precomputation.
+  tags: [diffie-hellman, key-exchange, discrete-log, man-in-the-middle, logjam]
+  references:
+    - "Diffie & Hellman, New Directions in Cryptography, IEEE IT-22, 1976"
+    - "RFC 3526 (MODP DH groups)"
+  related: [0x0107, 0x0207]
+
+params:
+  - name: p
+    type: prime
+    bits: 2048
+    role: public
+    description: "Prime modulus. Should be a safe prime."
+  - name: g
+    type: field_element
+    mod: p
+    bits: 2048
+    role: public
+    description: "Generator, usually 2 or 5."
+  - name: A
+    type: field_element
+    mod: p
+    bits: 2048
+    role: public
+    description: "The local party's public value, g^a mod p."
+  - name: a
+    type: scalar
+    mod: p
+    bits: 2048
+    role: secret
+    description: "Local private exponent. NOT written into the ciphertext."
+
+constraints:
+  - expr: "g > 1"
+    reason: "The generator must be greater than 1, otherwise every power is constant."
+    severity: error
+  - expr: "g < p"
+    reason: "The generator must be reduced modulo the modulus."
+    severity: error
+  - expr: "a % p != 0"
+    reason: "The private exponent cannot be zero."
+    severity: error
+  - expr: "p > 2"
+    reason: "The modulus must be an odd prime."
+    severity: error
+
+sampler:
+  strategy: mixed
+  max_rejections: 1000
+  catalog:
+    - name: modp-group-14
+      source: "RFC 3526 §3 (2048 bit)"

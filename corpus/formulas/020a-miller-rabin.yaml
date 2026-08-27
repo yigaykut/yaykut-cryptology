@@ -1,0 +1,67 @@
+id: 0x020A
+slug: miller-rabin
+version: 1
+status: active
+
+doc:
+  name: "Miller-Rabin Primality Test"
+  latex: 'n - 1 = 2^{s} d, \quad a^{d} \equiv 1 \ \text{veya}\ a^{2^{r} d} \equiv -1 \pmod{n}'
+  domain: "modular-arithmetic"
+  summary: >
+    Probabilistically tests whether a number is prime. It is the standard way
+    of finding primes for RSA and Diffie-Hellman key generation.
+  notes: >
+    A strengthened form of the Fermat test (0x0205). The Fermat test is fooled
+    by Carmichael numbers for every base; Miller-Rabin also checks the square
+    root structure, so it does not fall into that trap. The fact it rests on:
+    under a prime modulus 1 has only two square roots, +1 and -1. Composites
+    produce other square roots and the test catches that. ERROR PROBABILITY: a
+    composite passes for a single base with probability at most 1/4, so with k
+    independent bases that drops to 4^(-k). 40 rounds gives an error margin of
+    2^(-80), which is less likely in practice than a hardware fault. The test
+    never says "prime", it says "I found no evidence it is composite".
+    Deterministic tests such as AKS give a definite answer, but they are very
+    slow.
+  tags: [miller-rabin, primality-test, probabilistic, carmichael, key-generation]
+  references:
+    - "Miller, Riemann's Hypothesis and Tests for Primality, 1976"
+    - "Rabin, Probabilistic Algorithm for Testing Primality, 1980"
+  related: [0x0205, 0x0202]
+
+params:
+  - name: aday
+    type: uint
+    bits: 256
+    role: public
+    description: "The odd number n being tested for primality."
+  - name: taban
+    type: uint
+    bits: 256
+    role: public
+    description: "The candidate witness a."
+  - name: tur
+    type: uint
+    bits: 8
+    role: public
+    description: "Number of independent bases k. The error margin is 4^(-k)."
+
+constraints:
+  - expr: "aday > 3"
+    reason: "The test is defined for odd numbers greater than 3."
+    severity: error
+  - expr: "aday % 2 == 1"
+    reason: "The test is pointless for even numbers."
+    severity: error
+  - expr: "taban > 1"
+    reason: "The base must be greater than 1; a=1 always passes."
+    severity: error
+  - expr: "taban < aday"
+    reason: "The base must be reduced modulo the modulus."
+    severity: error
+  - expr: "tur >= 40"
+    reason: "Below 40 rounds the error margin is too high for cryptographic use."
+    severity: warning
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 2000

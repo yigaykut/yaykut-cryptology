@@ -1,0 +1,67 @@
+id: 0x0306
+slug: hkdf
+version: 1
+status: active
+
+doc:
+  name: "HKDF, Extract and Expand"
+  latex: 'PRK = \mathrm{HMAC}(salt,\ IKM), \quad T_i = \mathrm{HMAC}(PRK,\ T_{i-1} \,\|\, info \,\|\, i)'
+  domain: "hash-mac"
+  summary: >
+    A two stage construction that derives a key of any length from key
+    material that is not uniformly distributed. This project's engine produces
+    its keystream with it.
+  notes: >
+    The two stages do different jobs. EXTRACT compresses the entropy in the
+    input into a single fixed length PRK, so the output is close to uniform
+    even when the input is skewed. EXPAND then produces as many bytes as asked
+    for from the PRK.
+
+    Why not a plain hash: a raw hash can preserve some of the input's
+    structure. HMAC based extraction removes that problem.
+
+    DOMAIN SEPARATION: the info field stops keys derived from the same master
+    key for different purposes from mixing. This project uses three separate
+    labels: the selector mask, the payload stream and the MAC key.
+
+    The most output that can be produced is 255 times the digest length,
+    because the counter is a single byte.
+  tags: [hkdf, key-derivation, domain-separation, hmac, rfc5869]
+  references:
+    - "RFC 5869"
+    - "Krawczyk, Cryptographic Extraction and Key Derivation, CRYPTO 2010"
+  related: [0x0301, 0x0304]
+
+params:
+  - name: salt
+    type: bytes
+    bits: 128
+    role: public
+    description: "Salt for the extract stage. It does not have to be secret."
+  - name: info
+    type: bytes
+    bits: 128
+    role: public
+    description: "Domain separation label. Different purposes get different labels."
+  - name: uzunluk
+    type: uint
+    bits: 16
+    role: public
+    description: "Requested output length, in bytes."
+  - name: ikm
+    type: bytes
+    bits: 256
+    role: secret
+    description: "Input key material. NOT written into the ciphertext."
+
+constraints:
+  - expr: "uzunluk > 0"
+    reason: "The derived length must be positive."
+    severity: error
+  - expr: "uzunluk <= 8160"
+    reason: "HKDF can produce at most 255 x 32 = 8160 bytes; the counter is a single byte."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

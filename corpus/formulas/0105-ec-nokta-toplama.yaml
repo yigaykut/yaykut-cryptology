@@ -1,0 +1,66 @@
+id: 0x0105
+slug: ec-nokta-toplama
+version: 1
+status: active
+
+doc:
+  name: "Elliptic Curve Point Addition (Chord Rule)"
+  latex: '\lambda = \frac{y_2 - y_1}{x_2 - x_1}, \quad x_3 = \lambda^2 - x_1 - x_2, \quad y_3 = \lambda(x_1 - x_3) - y_1'
+  domain: "elliptic-curves"
+  summary: >
+    Adding two distinct points on a short Weierstrass curve. The sum is the
+    reflection about the x axis of the third point where the line through them
+    meets the curve.
+  notes: >
+    This formula is only valid when P != Q and x_1 != x_2. For P = Q the
+    tangent rule applies and lambda becomes (3x_1^2 + a) / (2y_1). If x_1 =
+    x_2 but y_1 != y_2 the two points are inverses and the sum is the point at
+    infinity. Those three separate branches are the source of the Weierstrass
+    form's side channel weakness, which the Edwards form (0x0104) solves.
+  tags: [ecc, group-operation, point-addition, chord-tangent]
+  references:
+    - "Silverman, The Arithmetic of Elliptic Curves, III.2"
+  related: [0x0101, 0x0104]
+
+params:
+  - name: p
+    type: prime
+    bits: 256
+    role: public
+    description: "Prime characteristic of the field."
+  - name: x1
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "x coordinate of the first point."
+  - name: y1
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "y coordinate of the first point."
+  - name: x2
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "x coordinate of the second point."
+  - name: y2
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "y coordinate of the second point."
+
+constraints:
+  - expr: "x1 % p != x2 % p"
+    reason: "The chord rule is undefined when x_1 = x_2; the tangent rule or the point at infinity is needed."
+    severity: error
+  - expr: "p > 3"
+    reason: "The short Weierstrass form requires char(F_p) > 3."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

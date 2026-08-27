@@ -1,0 +1,87 @@
+id: 0x0401
+slug: lwe
+version: 1
+status: active
+
+doc:
+  name: "LWE, Learning With Errors"
+  latex: '\mathbf{b} = A\mathbf{s} + \mathbf{e} \pmod{q}'
+  domain: "lattice-post-quantum"
+  summary: >
+    The core hard problem of lattice based cryptography. Given a matrix A and
+    a vector b, finding the secret vector s is computationally hard because of
+    the small error vector e.
+  notes: >
+    Without the error vector e this would be a plain system of linear
+    equations and Gaussian elimination would solve it in seconds. Adding a
+    little noise reduces the problem to the shortest vector problem in
+    lattices. In 2005 Regev gave a quantum reduction from worst case lattice
+    problems to LWE, which means the security rests on worst case rather than
+    average case hardness, and that is the strongest thing about lattice
+    cryptography. Shor's algorithm breaks factoring and discrete logarithms,
+    but there is no known quantum advantage against lattice problems. The
+    matrix A is not transmitted directly, it is expanded from a short seed
+    (rho).
+  tags: [lwe, lattice, post-quantum, regev, shortest-vector, shor]
+  references:
+    - "Regev, On Lattices, Learning with Errors, Random Linear Codes, and Cryptography, STOC 2005"
+    - "NIST FIPS 203 (ML-KEM)"
+  related: [0x0402, 0x0403]
+
+params:
+  - name: n
+    type: uint
+    bits: 16
+    role: public
+    description: "Dimension of the secret vector. The security parameter."
+  - name: m
+    type: uint
+    bits: 16
+    role: public
+    description: "Number of samples, the row count of A."
+  - name: q
+    type: uint
+    bits: 32
+    role: public
+    description: "The modulus, 3329 in the Kyber family."
+  - name: rho
+    type: bytes
+    bits: 256
+    role: public
+    description: "Public seed A is expanded from. The matrix is not transmitted."
+  - name: b
+    type: bytes
+    bits: 3072
+    role: public
+    description: "Sample vector, 256 coefficients of 12 bits."
+  - name: s
+    type: bytes
+    bits: 3072
+    role: secret
+    description: "The secret vector. NOT written into the ciphertext."
+  - name: e
+    type: bytes
+    bits: 3072
+    role: secret
+    description: "Small error vector, sampled from a narrow distribution."
+
+constraints:
+  - expr: "n > 0"
+    reason: "The dimension must be positive."
+    severity: error
+  - expr: "m > 0"
+    reason: "The number of samples must be positive."
+    severity: error
+  - expr: "q > 1"
+    reason: "The modulus must be greater than 1."
+    severity: error
+  - expr: "m > n"
+    reason: "If there are fewer samples than dimensions the problem is not constrained enough."
+    severity: warning
+
+sampler:
+  strategy: mixed
+  max_rejections: 1000
+  catalog:
+    - name: ml-kem-768
+      source: "NIST FIPS 203"

@@ -1,0 +1,65 @@
+id: 0x0507
+slug: zikzak-sifresi
+version: 1
+status: active
+
+doc:
+  name: "Zigzag (Rail Fence) Cipher"
+  latex: '\text{ray}(i) = r - 1 - \left| (i \bmod 2(r-1)) - (r-1) \right|'
+  domain: "classical-ciphers"
+  summary: >
+    A transposition cipher that writes the text zigzagging across r rails and
+    reads it back row by row. It does not change the letters, only their
+    order.
+  notes: >
+    It is a TRANSPOSITION cipher: the letters are preserved and only their
+    positions change. Letter frequencies are therefore untouched and the
+    ciphertext's letter distribution is identical to the plaintext's. That is
+    the basic difference between transposition and SUBSTITUTION. Caesar shifts
+    frequencies but preserves them; zigzag does not touch them at all. Modern
+    block ciphers use both together: in AES, SubBytes is substitution and
+    ShiftRows is transposition.
+
+    The key space is just the number of rails. If the text length is known, a
+    few attempts are enough. The absolute value in the formula produces the
+    turning points of the zigzag: the index advances with period 2(r-1) and
+    forms a triangle wave.
+  tags: [classical, transport, zigzag, rail-fence, frequency-preservation]
+  references:
+    - "Stinson, Cryptography: Theory and Practice, §1.1.4"
+  related: [0x0506, 0x0603]
+
+params:
+  - name: raylar
+    type: uint
+    bits: 8
+    role: public
+    description: "Number of rails r, which is the whole key."
+  - name: konum
+    type: uint
+    bits: 16
+    role: public
+    description: "Index i of the letter in the plaintext."
+  - name: uzunluk
+    type: uint
+    bits: 16
+    role: public
+    description: "Total length of the text."
+
+constraints:
+  - expr: "raylar >= 2"
+    reason: "A single rail zigzag does not change the text."
+    severity: error
+  - expr: "uzunluk > 0"
+    reason: "The text length must be positive."
+    severity: error
+  - expr: "konum < uzunluk"
+    reason: "The position cannot fall outside the text."
+    severity: error
+  - expr: "raylar < uzunluk"
+    reason: "If there are more rails than letters no zigzag forms."
+    severity: warning
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 2000

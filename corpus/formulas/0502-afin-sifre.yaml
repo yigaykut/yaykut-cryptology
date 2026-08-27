@@ -1,0 +1,62 @@
+id: 0x0502
+slug: afin-sifre
+version: 1
+status: active
+
+doc:
+  name: "Affine Cipher"
+  latex: 'c \equiv a m + b \pmod{26}, \quad m \equiv a^{-1}(c - b) \pmod{26}'
+  domain: "classical-ciphers"
+  summary: >
+    The Caesar cipher generalised with a multiplier. Each letter is first
+    multiplied by a and then shifted by b.
+  notes: >
+    For decryption, a has to be invertible modulo 26, which means gcd(a, 26) =
+    1. Since 26 = 2 x 13, there are 12 values that satisfy that, giving a key
+    space of 12 x 26 = 312. Better than Caesar, but still instantly brute
+    forced. Being a linear transformation it preserves the ranking of letter
+    frequencies and is fully open to frequency analysis. Two letters of known
+    plaintext give up the key directly. With a = 1 it reduces to the Caesar
+    cipher (0x0501).
+  tags: [classical, affine, modular-inverse, frequency-analysis, linear]
+  references:
+    - "Stinson, Cryptography: Theory and Practice, §1.1.3"
+  related: [0x0501, 0x0208]
+
+params:
+  - name: m
+    type: uint
+    bits: 5
+    role: public
+    description: "Index of the plaintext letter in the alphabet."
+  - name: a
+    type: uint
+    bits: 5
+    role: secret
+    description: "Multiplier key. Must be coprime to 26."
+  - name: b
+    type: uint
+    bits: 5
+    role: secret
+    description: "Shift key."
+
+constraints:
+  - expr: "gcd(a, 26) == 1"
+    reason: "If a is not invertible the cipher cannot be decrypted; gcd(a,26)=1 is required."
+    severity: error
+  - expr: "m < 26"
+    reason: "The letter index cannot exceed the alphabet size."
+    severity: error
+  - expr: "a < 26"
+    reason: "The multiplier must be reduced modulo the alphabet size."
+    severity: error
+  - expr: "b < 26"
+    reason: "The shift must be reduced modulo the alphabet size."
+    severity: error
+  - expr: "a != 1 or b != 0"
+    reason: "a=1 with b=0 is the identity transformation and encrypts nothing."
+    severity: warning
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

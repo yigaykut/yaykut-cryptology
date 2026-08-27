@@ -1,0 +1,85 @@
+id: 0x0207
+slug: elgamal-sifreleme
+version: 1
+status: active
+
+doc:
+  name: "ElGamal Encryption"
+  latex: 'c_1 = g^k \bmod p, \quad c_2 = m \cdot y^k \bmod p'
+  domain: "modular-arithmetic"
+  summary: >
+    Public key encryption resting on the hardness of the discrete logarithm. A
+    fresh k is picked on every encryption, so the same message gives a
+    different ciphertext each time.
+  notes: >
+    Unlike RSA it is probabilistic. Because k is random, two encryptions of
+    the same message differ, which is the precondition for semantic security.
+    CRITICAL: k must never be repeated. If the same k is used for two messages
+    then c2/c2' = m/m', and if one message is known the other falls out
+    immediately. The ciphertext is twice the length of the plaintext, and that
+    expansion has to be accepted.
+  tags: [elgamal, probabilistic-encryption, discrete-log, nonce, semantic-security]
+  references:
+    - "ElGamal, A Public Key Cryptosystem and a Signature Scheme Based on Discrete Logarithms, 1985"
+  related: [0x0206, 0x0201]
+
+params:
+  - name: p
+    type: prime
+    bits: 2048
+    role: public
+    description: "Prime modulus."
+  - name: g
+    type: field_element
+    mod: p
+    bits: 2048
+    role: public
+    description: "Generator."
+  - name: y
+    type: field_element
+    mod: p
+    bits: 2048
+    role: public
+    description: "The recipient's public key, g^x mod p."
+  - name: c1
+    type: field_element
+    mod: p
+    bits: 2048
+    role: public
+    description: "First component of the ciphertext."
+  - name: c2
+    type: field_element
+    mod: p
+    bits: 2048
+    role: public
+    description: "Second component of the ciphertext."
+  - name: k
+    type: scalar
+    mod: p
+    bits: 2048
+    role: secret
+    description: "Encryption nonce. Fresh on every message."
+  - name: m
+    type: field_element
+    mod: p
+    bits: 2048
+    role: secret
+    description: "The plaintext message."
+
+constraints:
+  - expr: "g > 1"
+    reason: "The generator must be greater than 1."
+    severity: error
+  - expr: "k % p != 0"
+    reason: "The nonce cannot be zero, c1 would be 1 and the encryption collapses."
+    severity: error
+  - expr: "m < p"
+    reason: "The message must be smaller than the modulus."
+    severity: error
+  - expr: "y > 1"
+    reason: "If the public key is 1 the private exponent is zero."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

@@ -1,0 +1,64 @@
+id: 0x0101
+slug: ec-weierstrass-short
+version: 2
+status: active
+
+doc:
+  name: "Short Weierstrass Form"
+  latex: 'y^2 = x^3 + ax + b'
+  domain: "elliptic-curves"
+  summary: >
+    The short Weierstrass form of an elliptic curve over a field F_p of
+    characteristic greater than 3. It is the base equation behind ECDSA, ECDH
+    and secp256k1.
+  notes: >
+    For the curve to be non-singular the discriminant must be non-zero:
+    -16(4a^3 + 27b^2) != 0. On a singular curve the group structure breaks
+    down and the discrete logarithm gets easier. The condition char(F_p) > 3
+    is what allows the reduction to this form; for characteristic 2 or 3 the
+    general Weierstrass form (0x0102) is needed. Point addition takes a
+    separate branch when P = Q, and that branch is the source of the side
+    channel leak the Edwards form (0x0104) removes.
+  tags: [ecc, curve, weierstrass, finite-field, char-above-3, secp256k1]
+  references:
+    - "Silverman, The Arithmetic of Elliptic Curves, III.1"
+    - "SEC 1: Elliptic Curve Cryptography, v2.0, §2.2"
+  related: [0x0102, 0x0103, 0x0104, 0x0105, 0x0106]
+
+params:
+  - name: p
+    type: prime
+    bits: 256
+    role: public
+    description: "Prime characteristic of the field. Must be greater than 3."
+  - name: a
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "First degree coefficient of the curve, reduced modulo p."
+  - name: b
+    type: field_element
+    mod: p
+    bits: 256
+    role: public
+    description: "Constant coefficient of the curve, reduced modulo p."
+
+constraints:
+  - expr: "(4 * a**3 + 27 * b**2) % p != 0"
+    reason: "The discriminant is zero, so the curve is singular and the group structure breaks down."
+    severity: error
+  - expr: "p > 3"
+    reason: "The short Weierstrass form is only valid for char(F_p) > 3."
+    severity: error
+
+sampler:
+  strategy: mixed
+  max_rejections: 1000
+  # NOTE: these constants are not typed by hand. The names resolve from the
+  # standard curve table and are checked against known test vectors in tests.
+  catalog:
+    - name: secp256k1
+      source: "SEC 2 v2.0"
+    - name: secp256r1
+      source: "FIPS 186-4 (P-256)"

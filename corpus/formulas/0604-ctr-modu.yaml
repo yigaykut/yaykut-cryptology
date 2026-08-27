@@ -1,0 +1,70 @@
+id: 0x0604
+slug: ctr-modu
+version: 1
+status: active
+
+doc:
+  name: "Counter Mode (CTR)"
+  latex: 'c_i = m_i \oplus E_K(\mathrm{nonce} \,\|\, i)'
+  domain: "symmetric-stream"
+  summary: >
+    A mode of operation turning a block cipher into a stream cipher. The
+    keystream comes from encrypting the nonce concatenated with a counter, and
+    is XORed with the message.
+  notes: >
+    Encryption and decryption are the same operation, and only the forward
+    direction of the block cipher is needed. Because the blocks are
+    independent it parallelises fully and allows random access. CRITICAL:
+    using the same (nonce, counter) pair TWICE under the same key produces the
+    same keystream, and then c1 XOR c2 = m1 XOR m2. It is exactly the key
+    reuse catastrophe of the one time pad (0x0505). CTR does NOT AUTHENTICATE
+    on its own. Flipping a bit in the ciphertext flips the corresponding
+    plaintext bit deterministically. It has to be used with a MAC; GCM
+    combines the two into a single construction.
+  tags: [ctr, mode-of-operation, stream-cipher, nonce-reuse, gcm, malleability]
+  references:
+    - "NIST SP 800-38A, §6.5"
+    - "NIST SP 800-38D (GCM)"
+  related: [0x0505, 0x0605, 0x0601]
+
+params:
+  - name: nonce
+    type: bytes
+    bits: 96
+    role: public
+    description: "One time value. Never repeated under the same key."
+  - name: counter
+    type: uint
+    bits: 32
+    role: public
+    description: "Block counter i."
+  - name: block_bits
+    type: uint
+    bits: 16
+    role: public
+    description: "Block width of the block cipher, 128 for AES."
+  - name: c
+    type: bytes
+    bits: 128
+    role: public
+    description: "Ciphertext block."
+  - name: K
+    type: bytes
+    bits: 256
+    role: secret
+    description: "Block cipher key. NOT written into the ciphertext."
+
+constraints:
+  - expr: "block_bits > 0"
+    reason: "The block width must be positive."
+    severity: error
+  - expr: "block_bits % 8 == 0"
+    reason: "The block width must be a whole number of bytes."
+    severity: error
+  - expr: "block_bits >= 128"
+    reason: "With 64 bit blocks the birthday bound predicts a collision after 2^32 blocks."
+    severity: warning
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

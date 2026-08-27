@@ -1,0 +1,87 @@
+id: 0x0801
+slug: shamir-gizli-paylasimi
+version: 1
+status: active
+
+doc:
+  name: "Shamir Secret Sharing"
+  latex: 'f(x) = a_0 + a_1 x + \cdots + a_{k-1} x^{k-1} \pmod{p}, \quad \text{pay}_i = (i, f(i))'
+  domain: "protocols"
+  summary: >
+    A scheme that splits a secret into n shares so that any k of them recover
+    it while k-1 of them say nothing at all.
+  notes: >
+    The idea comes from school mathematics: a polynomial of degree k-1 through
+    k points is unique. The secret is the constant term a_0. With k shares,
+    Lagrange interpolation reconstructs the polynomial and f(0) gives the
+    secret.
+
+    PERFECT SECRECY: k-1 shares give no information. With one unknown left,
+    every possible secret value is equally likely, the same argument as the
+    one time pad (0x0505). That is a guarantee from information theory, not
+    from computational hardness.
+
+    A finite field is essential. Working over the reals, the magnitude of the
+    shares would leak information about the secret.
+
+    In practice it is used for key recovery, multi signature authority and
+    protecting root certificates.
+  tags: [shamir, secret-sharing, lagrange, threshold-scheme, perfect-secrecy]
+  references:
+    - "Shamir, How to Share a Secret, CACM 22(11), 1979"
+  related: [0x0505, 0x0208]
+
+params:
+  - name: p
+    type: prime
+    bits: 128
+    role: public
+    description: "Prime modulus of the finite field. Must be larger than the secret."
+  - name: esik
+    type: uint
+    bits: 8
+    role: public
+    description: "Number of shares k needed to open the secret."
+  - name: toplam
+    type: uint
+    bits: 8
+    role: public
+    description: "Total number of shares n distributed."
+  - name: pay_x
+    type: uint
+    bits: 8
+    role: public
+    description: "Index i of the share. Cannot be zero, since f(0) is the secret itself."
+  - name: pay_y
+    type: field_element
+    mod: p
+    bits: 128
+    role: public
+    description: "Value of the share, f(i)."
+  - name: sir
+    type: field_element
+    mod: p
+    bits: 128
+    role: secret
+    description: "The shared secret, the constant term a_0. NOT written into the ciphertext."
+
+constraints:
+  - expr: "esik >= 2"
+    reason: "The threshold must be at least 2; k=1 means copying the secret into every share."
+    severity: error
+  - expr: "toplam >= esik"
+    reason: "If there are fewer shares than the threshold the secret can never be opened."
+    severity: error
+  - expr: "pay_x > 0"
+    reason: "The i = 0 share is the secret itself and cannot be distributed."
+    severity: error
+  - expr: "pay_x <= toplam"
+    reason: "The share index cannot exceed the number of shares distributed."
+    severity: error
+  - expr: "p > 2"
+    reason: "The modulus must be an odd prime."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 2000

@@ -1,0 +1,53 @@
+id: 0x0305
+slug: dogum-gunu-siniri
+version: 1
+status: active
+
+doc:
+  name: "Birthday Bound"
+  latex: 'p(n) \approx 1 - e^{-n^2 / (2N)}, \quad n \approx 1.177\sqrt{N}'
+  domain: "hash-mac"
+  summary: >
+    For a hash function with N distinct outputs, the probability of finding a
+    collision passes 50% after about the square root of N attempts. It is the
+    basic criterion for choosing a digest length.
+  notes: >
+    It is counterintuitive. Finding a collision in a 256 bit digest takes
+    2^128 operations, not 2^256, which means collision resistance is HALF the
+    digest length. If you want 128 bit security you need a 256 bit digest. MD5
+    at 128 bits and SHA-1 at 160 were abandoned because that bound became
+    reachable in practice; the SHA-1 collision was demonstrated by the
+    SHAttered work in 2017. Preimage resistance stays at the full length,
+    since the birthday effect only speeds up finding collisions.
+  tags: [birthday, collision, digest-length, sha1, shattered, security-margin]
+  references:
+    - "Menezes, van Oorschot, Vanstone, Handbook of Applied Cryptography, §2.1.5"
+    - "Stevens et al., The First Collision for Full SHA-1, CRYPTO 2017"
+  related: [0x0302, 0x0303]
+
+params:
+  - name: output_bits
+    type: uint
+    bits: 16
+    role: public
+    description: "Bit length of the digest output. N = 2^output_bits."
+  - name: trials
+    type: uint
+    bits: 64
+    role: public
+    description: "Number of attempts n."
+
+constraints:
+  - expr: "output_bits > 0"
+    reason: "The output length must be positive."
+    severity: error
+  - expr: "trials > 0"
+    reason: "The number of trials must be positive."
+    severity: error
+  - expr: "output_bits >= 256"
+    reason: "Below 256 bits the collision resistance does not meet a 128 bit security target."
+    severity: warning
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

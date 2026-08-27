@@ -1,0 +1,72 @@
+id: 0x0307
+slug: poly1305
+version: 1
+status: active
+
+doc:
+  name: "Poly1305 One Time MAC"
+  latex: '\mathrm{tag} = \left( \sum_{i=1}^{q} c_i r^{q-i+1} \bmod (2^{130}-5) \right) + s \pmod{2^{128}}'
+  domain: "hash-mac"
+  summary: >
+    An authentication code that treats the message as the coefficients of a
+    polynomial and evaluates it at a secret point r. It is used together with
+    ChaCha20.
+  notes: >
+    The idea is simple: message blocks become the coefficients of a
+    polynomial, and the polynomial is evaluated at a secret point. Two
+    different messages giving the same tag means the difference of two
+    polynomials has a root at that point. Since a degree q polynomial has at
+    most q roots, the forgery probability stays around q/2^106. That is not an
+    ASSUMPTION, it is a proved bound.
+
+    This is why Poly1305 is called an information theoretic MAC: its security
+    rests on the number of roots a polynomial can have, not on the hardness of
+    a problem.
+
+    CRITICAL: the pair (r, s) is ONE TIME. Authenticate two messages with the
+    same pair and you get two equations, r falls out, and from then on the
+    attacker produces a valid tag for any message they like. In practice (r,
+    s) is derived from ChaCha20 with a nonce on every message.
+
+    The prime 2^130 - 5 was chosen because it is a little over 128 bits and
+    makes modular reduction very cheap. Some bits of r are zeroed (clamping)
+    to keep the overflow under control.
+  tags: [poly1305, mac, one-time, polynomial, chacha20, provable-security]
+  references:
+    - "Bernstein, The Poly1305-AES message-authentication code, FSE 2005"
+    - "RFC 8439, §2.5"
+  related: [0x0301, 0x0605, 0x0505]
+
+params:
+  - name: blok_sayisi
+    type: uint
+    bits: 32
+    role: public
+    description: "Number of 16 byte message blocks q, the degree of the polynomial."
+  - name: etiket
+    type: bytes
+    bits: 128
+    role: public
+    description: "The 16 byte authentication tag produced."
+  - name: r
+    type: bytes
+    bits: 128
+    role: secret
+    description: "The secret point the polynomial is evaluated at. Clamped."
+  - name: s
+    type: bytes
+    bits: 128
+    role: secret
+    description: "One time additive mask. Never repeated, together with r."
+
+constraints:
+  - expr: "blok_sayisi > 0"
+    reason: "At least one block must be authenticated."
+    severity: error
+  - expr: "blok_sayisi < 1048576"
+    reason: "On very long messages the forgery bound q/2^106 starts to degrade."
+    severity: warning
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

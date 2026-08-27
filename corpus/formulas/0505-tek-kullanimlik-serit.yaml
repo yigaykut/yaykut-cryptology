@@ -1,0 +1,69 @@
+id: 0x0505
+slug: tek-kullanimlik-serit
+version: 1
+status: active
+
+doc:
+  name: "One-Time Pad"
+  latex: 'c_i = m_i \oplus k_i, \quad m_i = c_i \oplus k_i'
+  domain: "classical-ciphers"
+  summary: >
+    XOR with a key that is the same length as the message, fully random, and
+    used only once. It is the only cipher with proven perfect secrecy.
+  notes: >
+    Shannon PROVED its perfect secrecy in 1949: the ciphertext gives zero
+    information about the plaintext. Even an attacker with unlimited computing
+    power cannot break it, because every possible plaintext is equally likely.
+
+    That guarantee depends on ALL THREE conditions at once, and violating even
+    one collapses it entirely:
+
+    1. The key must be at least as long as the message. 2. The key must be
+    genuinely random; pseudorandom is NOT enough. 3. The key must never be
+    used a second time.
+
+    Violate the third and c1 XOR c2 = m1 XOR m2, so the key drops out of the
+    equation entirely and the two messages fall together. The VENONA project
+    against Soviet traffic fed on exactly this repeated pad mistake.
+
+    In practice it is impractical, because distributing the key is as hard as
+    sending the message.
+  tags: [otp, perfect-secrecy, shannon, xor, venona, key-reuse]
+  references:
+    - "Shannon, Communication Theory of Secrecy Systems, Bell System Technical Journal, 1949"
+    - "Vernam, US Patent 1,310,719, 1919"
+  related: [0x0503, 0x0604]
+
+params:
+  - name: length_bits
+    type: uint
+    bits: 32
+    role: public
+    description: "Message length. The key length has to equal it."
+  - name: c
+    type: bytes
+    bits: 256
+    role: public
+    description: "The ciphertext."
+  - name: m
+    type: bytes
+    bits: 256
+    role: secret
+    description: "The plaintext."
+  - name: k
+    type: bytes
+    bits: 256
+    role: secret
+    description: "One time key. Genuinely random, never repeated."
+
+constraints:
+  - expr: "length_bits > 0"
+    reason: "The message length must be positive."
+    severity: error
+  - expr: "length_bits <= 256"
+    reason: "This entry carries a message of at most 256 bits."
+    severity: error
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 1000

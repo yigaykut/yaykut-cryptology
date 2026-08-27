@@ -1,0 +1,94 @@
+id: 0x0805
+slug: x25519-el-sikisma
+version: 1
+status: active
+
+doc:
+  name: "X25519 Four Way DH Handshake"
+  latex: 'K = \mathrm{HKDF}\big(E_b \| E_y \| S_b \| S_y;\ ee \| es \| se \| ss\big)'
+  domain: "protocols"
+  summary: >
+    A handshake that combines both sides' ephemeral and static keys in four
+    separate Diffie-Hellman operations to produce a single session key. It
+    both authenticates and gives forward secrecy.
+  notes: >
+    One DH is not enough. With only ephemeral keys (anonymous DH) there is no
+    authentication and a man in the middle gets in for free. With only static
+    keys every session produces the same secret and forward secrecy is gone.
+    All four are used together and each corresponds to a different guarantee:
+
+    ee = DH(e_initiator, E_responder) forward secrecy; ephemerals are wiped es
+    = DH(e_initiator, S_responder) binds the initiator's ephemeral to an
+    identity se = DH(s_initiator, E_responder) binds the responder's ephemeral
+    to an identity ss = DH(s_initiator, S_responder) authentication; only
+    these two
+
+    Because all four go into HKDF, all four have to break. If a static key
+    leaks, ee still protects; if the ephemerals are captured, ss still
+    authenticates.
+
+    TRANSCRIPT BINDING: HKDF's salt is all four public keys, so the session
+    key is bound to the full transcript of the handshake. An attacker cannot
+    shuffle messages and land two sides on the same key under different
+    identities. That is the binding needed against the unknown key-share
+    attack.
+
+    WHY X25519: every 32 byte string is a valid public key, the Montgomery
+    ladder is branchless, the curve is twist secure, and scalar clamping
+    closes the cofactor problem at the source. None of that comes free on the
+    NIST curves, which need point validation, Jacobian coordinates and
+    separate special cases for addition and doubling.
+
+    ZERO SHARED SECRET: if the peer sends a small order point, the result is
+    zero regardless of the private key and the attacker has chosen the shared
+    secret. RFC 7748 §6.1 recommends this check and the engine rejects it.
+
+    This scheme shares its idea with the Noise framework's KK pattern and with
+    Signal's X3DH.
+
+    This corpus entry is the on-the-wire form of the handshake MESSAGE. The
+    message travels as an ordinary ciphertext under a pre-shared symmetric
+    key, so the handshake packet is indistinguishable from any other. An
+    eavesdropper cannot even see when a session is established.
+  tags: [x25519, curve25519, ecdh, handshake, forward-secrecy, noise, x3dh, ephemeral]
+  references:
+    - "RFC 7748 — Elliptic Curves for Security"
+    - "Bernstein, Curve25519: new Diffie-Hellman speed records, PKC 2006"
+    - "Perrin, The Noise Protocol Framework, rev. 34 (KK deseni)"
+  related: [0x0107, 0x0103, 0x0206, 0x0306]
+
+params:
+  - name: rol
+    type: enum
+    values: [initiator, responder]
+    role: public
+    description: "The sender's role in the handshake."
+  - name: efemer
+    type: bytes
+    bits: 256
+    role: public
+    description: "The sender's ephemeral X25519 public key. Its counterpart is wiped once the session ends."
+  - name: kimlik_izi
+    type: bytes
+    bits: 64
+    role: public
+    description: "Short trace of the sender's static public key, saying which device it is."
+  - name: efemer_gizli
+    type: bytes
+    bits: 256
+    role: secret
+    description: >
+      The ephemeral private key. NEVER written into the ciphertext, and
+      wiped from memory once the handshake completes. Forward secrecy
+      rests entirely on this.
+  - name: statik_gizli
+    type: bytes
+    bits: 256
+    role: secret
+    description: "The device's long lived identity key. Not written into the ciphertext."
+
+constraints: []
+
+sampler:
+  strategy: uniform_valid
+  max_rejections: 100
