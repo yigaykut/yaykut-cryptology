@@ -50,7 +50,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
 
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.2
         with:
           # The checkout action otherwise leaves the job token in
           # .git/config, where every later step in the job can read it.
@@ -96,7 +96,7 @@ jobs:
     name: measurement tools
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.2
         with:
           # The checkout action otherwise leaves the job token in
           # .git/config, where every later step in the job can read it.
@@ -155,7 +155,7 @@ jobs:
     # break the branch.
     continue-on-error: true
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.2
         with:
           # The checkout action otherwise leaves the job token in
           # .git/config, where every later step in the job can read it.
