@@ -7,7 +7,7 @@ are not.
 
 A cipher where the ciphertext carries **which formula** was used and the
 parameters that formula takes. Formulas live in a corpus. Encryption hides
-the formula identity with the key and writes the parameters next to
+the formula identity with the key and writes the parameters next to it.
 
 ---
 
