@@ -1,6 +1,6 @@
 # Formula Codebook Cipher
 
-Research and teaching code. It has not had a formal security audit.
+ and teaching code. It has not had a formal security audit.
 Claims here are backed by measurements where possible, and
 [`docs/audit.md`](docs/audit.md) keeps a separate list of the ones that
 are not.
