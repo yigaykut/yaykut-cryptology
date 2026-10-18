@@ -71,7 +71,7 @@ The only source of unpredictability is `os.urandom`. Encrypting the same
 formula twice with the same key gives completely different output. Pass a
 fixed nonce and the engine becomes deterministic.
 
-The corpus is not secret. `corpus/` can be published and security comes
+The corpus is not secret. `corpus/` can be published and security
 from the key alone.
 
 ---
